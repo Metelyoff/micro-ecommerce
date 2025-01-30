@@ -155,14 +155,27 @@ To set up and run the project locally:
 ``` bash
    docker-compose up
 ```
-1. Access the following components:
-    - **Frontend**: [http://localhost](http://localhost)
-    - **Kafka Topics UI**: [http://localhost:8092](http://localhost:8092)
-    - **Debezium UI**: [http://localhost:8089](http://localhost:8089)
-    - Services:
-        - Order Service: [http://localhost:8086](http://localhost:8086)
-        - Payment Service: [http://localhost:8085](http://localhost:8085)
-        - Inventory Service: [http://localhost:8084](http://localhost:8084)
+
+---
+
+If you don't see the connectors in the Debezium UI, you need restart the service **debezium-connector**
+
+![Debezium connectors](debezium_connector.jpg)
+
+---
+
+Access the following components:
+ - **Frontend**: [http://localhost](http://localhost)
+ - **Kafka Topics UI**: [http://localhost:8092](http://localhost:8092)
+ - **Debezium UI**: [http://localhost:8089](http://localhost:8089)
+ - **Services**:
+   - Order Service: [http://localhost:8086](http://localhost:8086)
+   - Payment Service: [http://localhost:8085](http://localhost:8085)
+   - Inventory Service: [http://localhost:8084](http://localhost:8084)
+ - **Databases**:
+   - Order Service: [jdbc:postgresql://localhost:5433/inventory_service_db](jdbc:postgresql://localhost:5433/inventory_service_db)
+   - Payment Service: [jdbc:postgresql://localhost:5434/inventory_service_db](jdbc:postgresql://localhost:5434/inventory_service_db)
+   - Inventory Service: [jdbc:postgresql://localhost:5435/inventory_service_db](jdbc:postgresql://localhost:5435/inventory_service_db)
 
 ## Postman Collection
 
