@@ -86,6 +86,74 @@ To explore and test the APIs, use the Postman collection. You can either downloa
 - Publish reusable Outbox dependencies to a public Maven repository.
 - Extend the system with additional services like Shipping and Notifications.
 
+### **Principles of Using the `OutboxTransactionAspect`**
+The `OutboxTransactionAspect` is a design pattern implementation and supporting utility commonly used in an **event-driven architecture**. Its purpose is to ensure reliable messaging between microservices by leveraging the **Outbox Pattern** for publishing events to a message broker (like Kafka or RabbitMQ) in a way that ensures atomicity and eventual consistency. Here's a detailed explanation for your README:
+### **Why is the `OutboxTransactionAspect` Needed?**
+In distributed system architectures, services communicate asynchronously using events. However:
+1. **Reliability Issues**: When a service updates its database and publishes an event to a message broker, it’s possible that one operation succeeds while the other fails (e.g., database updated but event not published, or vice versa), resulting in inconsistent state or lost updates.
+2. **Atomicity Guarantee**: Traditional methods don’t guarantee that updating the database and publishing the event occur as a single atomic unit of work.
+3. **Outbox Solution**: The **OutboxTransactionAspect** ensures that:
+   - Events are written to the **Outbox table** in the same transaction as the database update.
+   - Events are reliably published to the message broker asynchronously **after the transaction is committed**.
+
+### **How Does the `@OutboxTransaction` Work?**
+The `@OutboxTransaction` works by intercepting transactional methods using AOP (Aspect-Oriented Programming). It ensures events are written to a dedicated **Outbox table** as part of the business logic's database transaction. The process typically has the following steps:
+1. **Database Update with Outbox**:
+   - As part of a database transaction (e.g., creating an order, updating inventory), an **OutboxEvent** is created and inserted into an `outbox` table along with the main data changes.
+
+2. **Transaction Commit**:
+   - The transactional database operation ensures that either both the state change and Outbox write succeed, or none of them are performed (ensuring atomicity).
+
+3. **Event Publishing**:
+   - A background process (e.g., a scheduler, message relay service, or Kafka Connect) asynchronously reads and publishes the events from the `outbox` table to the message broker (Kafka, for instance).
+   - Once the message is successfully published, the Outbox entry is marked as published (often a `status` column is updated or the row is deleted).
+
+This separation ensures that the system achieves **eventual consistency**, even in the presence of intermittent failures.
+### **OutboxEvent Fields**
+The `OutboxEvent` is the entity saved in the `outbox` table. Its fields typically include metadata about the event and the payload.
+
+| **Field**            | **Description**                                                                  |
+|----------------------|----------------------------------------------------------------------------------|
+| `id`                 | A unique identifier for the event.                                               |
+| `contextId`          | The ID of the entity (e.g., Order ID) related to the event.                      |
+| `processName`        | Automatically sets to indicate which class and method triggered the transaction. |
+| `eventName`          | Defines the type of the event (e.g., `OrderCreated`, `PaymentProcessed`).        |
+| `aggregate_type`     | The type of aggregate or entity (e.g., `Order`, `Payment`).                      |
+| `status`             | The transaction status PROCESSED or FAILED.                                      |
+| `statusMessage`      | The readable success or failure message of the transaction work.                 |
+| `payload`            | The serialized payload/data of the event (usually JSON).                         |
+| `processedTimestamp` | Transaction processing timestamp (how long is it).                               |
+| `createdAt`          | Timestamp indicating when the event was created in the `outbox` table.           |
+| `version`            | For an optimist locking.                                                         |
+
+The sequence below illustrates how the `@OutboxTransaction` orchestrates database operations and ensures reliable event processing:
+```mermaid
+sequenceDiagram
+    participant Service as Microservice
+    participant DB as Database
+    participant Outbox as Outbox Table
+    participant CDC as CDC (Debezium)
+    participant Broker as Message Broker (Kafka)
+
+    Service->>DB: Begin Database Transaction
+    Service->>DB: Insert/Update Business Data
+    Service->>Outbox: Insert OutboxEvent
+    Outbox->>DB: OutboxEvent committed
+    Service->>DB: Commit Transaction
+    CDC-->>DB: Polling-based reading DB logs
+    DB->>CDC: Transaction logs info
+    CDC->>Broker: Publish OutboxEvent (asynchronously)
+    Broker-->>CDC: Acknowledge Success
+```
+### **Advantages of Using `OutboxTransaction`**
+1. **Atomicity**: Ensures that business logic operations and event recording are a single atomic unit of work.
+2. **Idempotence**: As events are recorded in the database, failed publishing attempts can be retried without risking duplicate state changes.
+3. **Resilience**: Increases fault tolerance by decoupling message publication from business operations.
+
+### **When to Use the OutboxTransactionAspect?**
+- Use it when your microservices rely on asynchronous communication with guaranteed event delivery for critical data consistency (e.g., an order service notifying inventory and payment services of a placed order).
+- It’s particularly valuable in systems using **change data capture (CDC)** tools like **Debezium**, as the `Outbox` table can be monitored to publish events in real time.
+
 ## Contributions
 Contributions via pull requests are welcome! Please follow the repository's contributing guidelines.
 ## License
