@@ -118,8 +118,7 @@ The `OutboxEvent` is the entity saved in the `outbox` table. Its fields typicall
 | `contextId`          | The ID of the entity (e.g., Order ID) related to the event.                      |
 | `processName`        | Automatically sets to indicate which class and method triggered the transaction. |
 | `eventName`          | Defines the type of the event (e.g., `OrderCreated`, `PaymentProcessed`).        |
-| `aggregate_type`     | The type of aggregate or entity (e.g., `Order`, `Payment`).                      |
-| `status`             | The transaction status PROCESSED or FAILED.                                      |
+| `status`             | The local transaction status PROCESSED or FAILED.                                |
 | `statusMessage`      | The readable success or failure message of the transaction work.                 |
 | `payload`            | The serialized payload/data of the event (usually JSON).                         |
 | `processedTimestamp` | Transaction processing timestamp (how long is it).                               |
@@ -129,21 +128,22 @@ The `OutboxEvent` is the entity saved in the `outbox` table. Its fields typicall
 The sequence below illustrates how the `@OutboxTransaction` orchestrates database operations and ensures reliable event processing:
 ```mermaid
 sequenceDiagram
-    participant Service as Microservice
-    participant DB as Database
-    participant Outbox as Outbox Table
-    participant CDC as CDC (Debezium)
-    participant Broker as Message Broker (Kafka)
+   participant Service as Microservice
+   participant DB as Database
+   participant Outbox as Outbox Table
+   participant CDC as CDC (Debezium)
+   participant Broker as Message Broker (Kafka)
 
-    Service->>DB: Begin Database Transaction
-    Service->>DB: Insert/Update Business Data
-    Service->>Outbox: Insert OutboxEvent
-    Outbox->>DB: OutboxEvent committed
-    Service->>DB: Commit Transaction
-    CDC-->>DB: Polling-based reading DB logs
-    DB->>CDC: Transaction logs info
-    CDC->>Broker: Publish OutboxEvent (asynchronously)
-    Broker-->>CDC: Acknowledge Success
+   Service->>DB: Begin Database Transaction
+   Service->>DB: Insert/Update Business Data
+   Service->>Outbox: Insert OutboxEvent
+   Outbox->>DB: OutboxEvent committed
+   Service->>DB: Commit Transaction
+   CDC-->>DB: Polling-based reading DB logs (outbox table in that case)
+   DB->>CDC: Transaction logs info
+   CDC->>Broker: Publish OutboxEvent (asynchronously)
+   Broker-->>CDC: Acknowledge Success
+
 ```
 ### **Advantages of Using `OutboxTransaction`**
 1. **Atomicity**: Ensures that business logic operations and event recording are a single atomic unit of work.
