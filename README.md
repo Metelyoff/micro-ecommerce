@@ -1,7 +1,8 @@
 # Distributed E-commerce System with Event-Driven Architecture
 This project is a **distributed e-commerce system** implemented using an **event-driven architecture**, featuring multiple services collaborating seamlessly to handle orders, payments, and inventory management. It is designed to demonstrate concepts such as microservices, event sourcing, change data capture (CDC), and scalability using tools like Kafka, PostgreSQL, Debezium, and more.
 
-![Distributed E-commerce System](ecommerce.jpg)
+![Distributed E-commerce System desktop version](ecommerce.jpg)
+![Distributed E-commerce System mobile version](ecommerce-mob.jpg)
 
 ## Key Features
 1. **Microservice Architecture**:
