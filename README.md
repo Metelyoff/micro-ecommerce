@@ -66,7 +66,7 @@ To set up and run the project locally:
 
 To explore and test the APIs, use the Postman collection. You can either download it directly or import it using the "Run in Postman" button below.
 
-- [Download Postman Collection](https://github.com/Metelyoff/micro-ecommerce/raw/refs/heads/main/Micro%20E-commerce.postman_collection.json)
+- [Download Postman Collection](https://github.com/Metelyoff/micro-ecommerce/blob/main/Micro%20E-commerce.postman_collection.json)
 
 [<img src="https://run.pstmn.io/button.svg" alt="Run In Postman" style="width: 128px; height: 32px;">](https://god.gw.postman.com/run-collection/24504602-96dafe1f-3aae-4d9f-8901-df77df17cf2e?action=collection%2Ffork&source=rip_markdown&collection-url=entityId%3D24504602-96dafe1f-3aae-4d9f-8901-df77df17cf2e%26entityType%3Dcollection%26workspaceId%3D77be33e6-4bcf-4494-a300-c4a8816ee6d2)
 
