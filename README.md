@@ -49,6 +49,104 @@ This project is a **distributed e-commerce system** implemented using an **event
     - **Debezium** for database change data capture.
     - **PostgreSQL** databases for service persistence.
 
+## Project Description
+Order Processing Flow with Reservation and Payment Handling
+```mermaid
+sequenceDiagram
+    actor User
+    participant Browser
+    participant Order as Order service
+    participant Inventory as Inventory service
+    participant Payment as Payment service
+
+    User->>Browser: Creates the order with items and selected payment
+    Browser->>Order: Sends order request
+    Order->>Browser: 201 created with id
+    Browser->>Order: Subscribes for the order status notifications by created id via SSE
+    Order->>Inventory: Tryies reserve the items
+    alt Items reserved successfully
+    Inventory->>Order: Confirms reservation
+    Order->>Payment: Creates a payment
+    Payment->>Payment: Calculates the expired date
+    Order->>Browser: Sends ITEMS_RESERVED successfully SSE
+    Browser->>User: Displays ITEMS_RESERVED status
+    Payment->>Order: Sends successfully confirmation payment
+    Order->>Order: Changes status to PENDING_FOR_PAY
+    Order->>Browser: Sends SSE with updated order status PENDING_FOR_PAY
+    Browser->>Browser: Set expired timer based on the expartion payment date
+    Browser->>User: Displays PENDING_FOR_PAY status with timer
+    alt User pay
+    User->>Browser: Confirms the payment by clicking Pay btn
+    Browser->>Payment: Sends payment request
+    Payment->>Browser: 200 payment accepted
+    Payment->>Order: Sends the PAID status
+    Order->>Order: Updates the order status
+    Order->>Browser: Sends SSE event with the PAID status
+    Browser->>User: Displays PAID status
+    else Payment expired
+    Payment->>Order: Sends PAYMENT_EXPIRED status
+    Order->>Order: Updates order status
+    Order->>Inventory: Cancels items reservation
+    Order->>Browser: Sends SSE with PAYMENT_EXPIRED status
+    Browser->>User: Displays the PAYMENT_EXPIRED status
+    end
+    else
+    Inventory->>Order: Reservation failed by some reason
+    Order->>Payment: Sends failure event to cancel payment
+    Payment->>Order: Confirms cancellation
+    Order->>Browser: Sends SSE event with order status and message
+    Browser->>User: Displays FAILED status
+    User->>Browser: Creates new order
+    end
+```
+This sequence diagram describes the process of order creation, item reservation, and payment handling, along with potential failure scenarios.
+
+---
+
+1. **Order Creation**
+   1.	The User initiates the order by selecting items and a payment method.
+   2.	The Browser sends the order request to the Order Service.
+   3.	The Order Service responds with a 201 Created status and provides an order ID.
+   4.	The Browser subscribes to order status updates via Server-Sent Events (SSE).
+
+2. **Item Reservation**
+   1. The Order Service attempts to reserve the items by calling the Inventory Service.
+   2. If the reservation is successful:
+         *	The Inventory Service confirms the reservation.
+         *	The Order Service creates a payment request in the Payment Service.
+         *	The Payment Service calculates the payment expiration date.
+         *	The Order Service updates the status to ITEMS_RESERVED and sends an SSE event.
+         *	The Browser updates the UI to display ITEMS_RESERVED status.
+
+3. **Payment Handling**
+   1. The Payment Service confirms the payment is ready and updates the Order Service.
+   2. The Order Service changes the status to PENDING_FOR_PAY and sends an SSE update.
+   3. The Browser sets a timer based on the payment expiration date and displays the countdown.
+
+4. **Payment Scenarios**
+
+   a) **User Completes Payment**
+      1. The User clicks the Pay button.
+      2. The Browser sends the payment request to the Payment Service.
+      3. The Payment Service processes the request and returns 200 Payment Accepted.
+      4. The Payment Service updates the Order Service with PAID status.
+      5. The Order Service updates the status and sends an SSE event.
+      6. The Browser updates the UI to show PAID status.
+
+   b) **Payment Expires**
+      1. If the User does not pay within the time limit, the Payment Service sends a PAYMENT_EXPIRED event.
+      2. The Order Service:
+            *	Updates the order status.
+            *	Cancels the inventory reservation.
+            *	Sends an SSE event with PAYMENT_EXPIRED status.
+      3. The Browser updates the UI to show PAYMENT_EXPIRED.
+
+**Key Takeaways**
+*	SSE (Server-Sent Events) is used to keep the UI updated with order status changes.
+*	The Inventory Service ensures item availability before proceeding with payment.
+*	The Payment Service sets an expiration time to handle unpaid orders gracefully.
+*	Failure handling mechanisms ensure order rollback in case of reservation or payment issues.
+
 ## Running the Project
 To set up and run the project locally:
 1. Install **Docker** and **Docker Compose** on your system.
