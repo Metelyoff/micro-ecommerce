@@ -135,7 +135,7 @@ sequenceDiagram
       Outbox->>DB: OutboxEvent committed
       Service->>DB: Commit Transaction
    else Transaction rollbacked
-      Service->>Outbox: Insert async FAILED OutboxEvent
+      Service->>Outbox: Insert (asynchronously) FAILED OutboxEvent
       Outbox->>DB: OutboxEvent committed
    end
    CDC-->>DB: Polling-based reading DB logs (outbox table in that case)
