@@ -80,12 +80,6 @@ To explore and test the APIs, use the Postman collection. You can either downloa
 - **Containerization**: Docker Compose
 - **Monitoring**: Kafka UI, Debezium UI
 
-## Future Enhancements
-- Implement CI/CD pipelines for seamless deployment.
-- Add more comprehensive testing for scalability and fault-tolerance.
-- Publish reusable Outbox dependencies to a public Maven repository.
-- Extend the system with additional services like Shipping and Notifications.
-
 ### **Principles of Using the `OutboxTransactionAspect`**
 The `OutboxTransactionAspect` is a design pattern implementation and supporting utility commonly used in an **event-driven architecture**. Its purpose is to ensure reliable messaging between microservices by leveraging the **Outbox Pattern** for publishing events to a message broker (like Kafka or RabbitMQ) in a way that ensures atomicity and eventual consistency. Here's a detailed explanation for your README:
 ### **Why is the `OutboxTransactionAspect` Needed?**
@@ -225,6 +219,12 @@ As a client (i.e., a service or component in the architecture that wants to proc
 
 ---
 By defining specific `OutboxEventHandler` implementations for each event, you create a flexible and maintainable way to manage complex event-driven logic within the application.
+
+## Future Enhancements
+- Implement CI/CD pipelines for seamless deployment.
+- Add more comprehensive testing for scalability and fault-tolerance.
+- Publish reusable Outbox dependencies to a public Maven repository.
+- Extend the system with additional services like Shipping and Notifications.
 
 ## Contributions
 Contributions via pull requests are welcome! Please follow the repository's contributing guidelines.
