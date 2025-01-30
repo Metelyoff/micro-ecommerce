@@ -1,0 +1,1193 @@
+{
+	"info": {
+		"_postman_id": "60a0b759-1943-4768-b251-f7b203f7161f",
+		"name": "Micro E-commerce",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "24504602"
+	},
+	"item": [
+		{
+			"name": "Orders",
+			"item": [
+				{
+					"name": "1. Create order",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Location is present in the header\", function () {",
+									"    pm.response.to.have.header(\"Location\");",
+									"    const locationHeader = pm.response.headers.get(\"Location\");",
+									"    if (locationHeader) {",
+									"        const idMatch = locationHeader.match(/\\/orders\\/([a-f0-9\\-]{36})$/);",
+									"        if (idMatch && idMatch[1]) {",
+									"            const id = idMatch[1];",
+									"            console.log(\"Extracted ID (UUID):\", id);",
+									"            pm.collectionVariables.set(\"currentOrderId\", id);",
+									"        } else {",
+									"            console.log(\"No valid UUID found in the Location header.\");",
+									"        }",
+									"    } else {",
+									"        console.log(\"Location header is not present in the response.\");",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"paymentMethod\": \"CARD\",\n    \"items\": [\n        {\n            \"productId\": \"c57cdeee-2749-4d09-9a8f-b8e2d915bfd0\",\n            \"name\": \"Item-5\",\n            \"image\": \"https://picsum.photos/id/5/400/300\",\n            \"price\": 92.58,\n            \"quantity\": 4\n        },\n        {\n            \"productId\": \"bec2323c-bf13-4405-83b9-7195eab37366\",\n            \"name\": \"Item-6\",\n            \"image\": \"https://picsum.photos/id/6/400/300\",\n            \"price\": 99.38,\n            \"quantity\": 3\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{orderHost}}/orders",
+							"host": [
+								"{{orderHost}}"
+							],
+							"path": [
+								"orders"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Successful created",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"paymentMethod\": \"CARD\",\n    \"items\": [\n        {\n            \"productId\": \"201ce47f-211f-4ef9-b28f-0d7fdb1f6864\",\n            \"name\": \"Item-0\",\n            \"image\": \"https://picsum.photos/id/0/400/300\",\n            \"price\": 77.74,\n            \"quantity\": 1\n        },\n        {\n            \"productId\": \"3df33969-a62d-49ac-a2ad-d184933f71c8\",\n            \"name\": \"Item-1\",\n            \"image\": \"https://picsum.photos/id/1/400/300\",\n            \"price\": 96.84,\n            \"quantity\": 3\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{orderHost}}/orders",
+									"host": [
+										"{{orderHost}}"
+									],
+									"path": [
+										"orders"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "plain",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Method"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Headers"
+								},
+								{
+									"key": "Location",
+									"value": "/orders/f26bd243-34da-48e8-b693-9b953d826d6c"
+								},
+								{
+									"key": "Access-Control-Expose-Headers",
+									"value": "Location"
+								},
+								{
+									"key": "Content-Length",
+									"value": "0"
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 27 Jan 2025 22:43:52 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": null
+						}
+					]
+				},
+				{
+					"name": "3. Get order by id",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is present\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\");",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response body is not empty\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.id).to.not.empty;",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{orderHost}}/orders/{{currentOrderId}}",
+							"host": [
+								"{{orderHost}}"
+							],
+							"path": [
+								"orders",
+								"{{currentOrderId}}"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Failed with no items found",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{orderHost}}/orders/{{currentOrderId}}",
+									"host": [
+										"{{orderHost}}"
+									],
+									"path": [
+										"orders",
+										"{{currentOrderId}}"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Method"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Headers"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 27 Jan 2025 22:55:22 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": \"d10c90bc-b4b5-4b14-bc58-321da741c32f\",\n    \"items\": [\n        {\n            \"id\": \"5fbbbfd8-012e-4797-b33d-a047cfcc13a8\",\n            \"productId\": \"3df33969-a62d-49ac-a2ad-d184933f71c8\",\n            \"name\": \"Item-1\",\n            \"price\": 96.84,\n            \"quantity\": 3\n        },\n        {\n            \"id\": \"3e24fe8c-942f-4892-ad39-e09c3ebbac75\",\n            \"productId\": \"201ce47f-211f-4ef9-b28f-0d7fdb1f6864\",\n            \"name\": \"Item-0\",\n            \"price\": 77.74,\n            \"quantity\": 1\n        }\n    ],\n    \"totalItems\": 4,\n    \"totalPrice\": 368.26,\n    \"status\": \"FAILED\",\n    \"statusDescription\": \"Item by id \\\"3df33969-a62d-49ac-a2ad-d184933f71c8\\\" not found\",\n    \"paymentMethod\": \"CARD\",\n    \"paymentId\": null,\n    \"createdAt\": \"2025-01-27T23:55:10.857401\",\n    \"contextId\": \"d10c90bc-b4b5-4b14-bc58-321da741c32f\"\n}"
+						}
+					]
+				},
+				{
+					"name": "4. Cancel order by id",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});",
+									"",
+									"pm.test(\"Body is empty\", function () {",
+									"    pm.response.to.be.empty;",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{orderHost}}/orders/{{currentOrderId}}/cancel",
+							"host": [
+								"{{orderHost}}"
+							],
+							"path": [
+								"orders",
+								"{{currentOrderId}}",
+								"cancel"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Fail cancel",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{orderHost}}/orders/{{currentOrderId}}/cancel",
+									"host": [
+										"{{orderHost}}"
+									],
+									"path": [
+										"orders",
+										"{{currentOrderId}}",
+										"cancel"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Method"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Headers"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 27 Jan 2025 23:30:31 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": \"Order status 'FAILED' is invalid\"\n}"
+						}
+					]
+				},
+				{
+					"name": "5. Get all orders",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is present\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\");",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response body is not empty\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.not.empty;",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{orderHost}}/orders",
+							"host": [
+								"{{orderHost}}"
+							],
+							"path": [
+								"orders"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "One failed order",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{orderHost}}/orders",
+									"host": [
+										"{{orderHost}}"
+									],
+									"path": [
+										"orders"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Method"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Headers"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 27 Jan 2025 23:01:42 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": \"d10c90bc-b4b5-4b14-bc58-321da741c32f\",\n        \"items\": [\n            {\n                \"id\": \"5fbbbfd8-012e-4797-b33d-a047cfcc13a8\",\n                \"productId\": \"3df33969-a62d-49ac-a2ad-d184933f71c8\",\n                \"name\": \"Item-1\",\n                \"price\": 96.84,\n                \"quantity\": 3\n            },\n            {\n                \"id\": \"3e24fe8c-942f-4892-ad39-e09c3ebbac75\",\n                \"productId\": \"201ce47f-211f-4ef9-b28f-0d7fdb1f6864\",\n                \"name\": \"Item-0\",\n                \"price\": 77.74,\n                \"quantity\": 1\n            }\n        ],\n        \"totalItems\": 4,\n        \"totalPrice\": 368.26,\n        \"status\": \"FAILED\",\n        \"statusDescription\": \"Item by id \\\"3df33969-a62d-49ac-a2ad-d184933f71c8\\\" not found\",\n        \"paymentMethod\": \"CARD\",\n        \"paymentId\": null,\n        \"createdAt\": \"2025-01-27T23:55:10.857401\",\n        \"contextId\": \"d10c90bc-b4b5-4b14-bc58-321da741c32f\"\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "2. Subscribe for the order notifications",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is present\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\");",
+									"});",
+									"",
+									"pm.test(\"Content-Type is text/event-stream\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"text/event-stream\");",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{orderHost}}/orders/subscribe/{{currentOrderId}}",
+							"host": [
+								"{{orderHost}}"
+							],
+							"path": [
+								"orders",
+								"subscribe",
+								"{{currentOrderId}}"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Already closed stream",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{orderHost}}/orders/subscribe/{{currentOrderId}}",
+									"host": [
+										"{{orderHost}}"
+									],
+									"path": [
+										"orders",
+										"subscribe",
+										"{{currentOrderId}}"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "plain",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Method"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Headers"
+								},
+								{
+									"key": "Content-Type",
+									"value": "text/event-stream"
+								},
+								{
+									"key": "Content-Length",
+									"value": "0"
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 27 Jan 2025 22:49:10 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": null
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Payments",
+			"item": [
+				{
+					"name": "1. Create payment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Location is present in the header\", function () {",
+									"    pm.response.to.have.header(\"Location\");",
+									"    const locationHeader = pm.response.headers.get(\"Location\");",
+									"    if (locationHeader) {",
+									"        const idMatch = locationHeader.match(/\\/payments\\/([a-f0-9\\-]{36})$/);",
+									"        if (idMatch && idMatch[1]) {",
+									"            const id = idMatch[1];",
+									"            console.log(\"Extracted ID (UUID):\", id);",
+									"            pm.collectionVariables.set(\"currentPaymentId\", id);",
+									"        } else {",
+									"            console.log(\"No valid UUID found in the Location header.\");",
+									"        }",
+									"    } else {",
+									"        console.log(\"Location header is not present in the response.\");",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"method\": \"CARD\",\n    \"amount\": 200.0,\n    \"orderId\": \"{{currentOrderId}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{paymentHost}}/payments",
+							"host": [
+								"{{paymentHost}}"
+							],
+							"path": [
+								"payments"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Created successfully",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"method\": \"CARD\",\n    \"amount\": 200.0,\n    \"orderId\": \"{{currentOrderId}}\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{paymentHost}}/payments",
+									"host": [
+										"{{paymentHost}}"
+									],
+									"path": [
+										"payments"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "plain",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Method"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Headers"
+								},
+								{
+									"key": "Location",
+									"value": "/payments/2b792307-96d1-4919-b5bd-29bf005a13bb"
+								},
+								{
+									"key": "Content-Length",
+									"value": "0"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 30 Jan 2025 14:30:52 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": null
+						}
+					]
+				},
+				{
+					"name": "3. Pay by payment id",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is present\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\");",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response body is not empty\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.id).to.not.empty;",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{paymentHost}}/payments/{{currentPaymentId}}/pay",
+							"host": [
+								"{{paymentHost}}"
+							],
+							"path": [
+								"payments",
+								"{{currentPaymentId}}",
+								"pay"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Success payment",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{paymentHost}}/payments/{{currentPaymentId}}/pay",
+									"host": [
+										"{{paymentHost}}"
+									],
+									"path": [
+										"payments",
+										"{{currentPaymentId}}",
+										"pay"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Method"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Headers"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 30 Jan 2025 14:30:14 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": \"d999d39f-bee2-406c-82a9-cfee85953270\",\n    \"amount\": 668.46,\n    \"method\": \"CARD\",\n    \"status\": \"SUCCESS\",\n    \"orderId\": \"f91b4da8-53dd-4439-93f0-ca754ac7337d\",\n    \"statusDescription\": \"Please complete the payment before it expires 30-01-2025 14:30:38\",\n    \"expiredAt\": \"2025-01-30T14:30:38.96481\",\n    \"createdAt\": \"2025-01-30T14:29:38.96481\",\n    \"contextId\": \"f91b4da8-53dd-4439-93f0-ca754ac7337d\"\n}"
+						}
+					]
+				},
+				{
+					"name": "4. Get all payments",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is present\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\");",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response body is not empty\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.not.empty;",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{paymentHost}}/payments",
+							"host": [
+								"{{paymentHost}}"
+							],
+							"path": [
+								"payments"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Not empty payments",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{paymentHost}}/payments",
+									"host": [
+										"{{paymentHost}}"
+									],
+									"path": [
+										"payments"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Method"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Headers"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 30 Jan 2025 14:31:16 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": \"deb756dd-f0a8-4960-9427-a1ee952f550c\",\n        \"amount\": 272.59,\n        \"method\": \"CASH\",\n        \"status\": \"EXPIRED\",\n        \"orderId\": \"f7448a9d-9720-4abf-aebb-629f7df07aa7\",\n        \"statusDescription\": \"Payment expired after 1 minutes\",\n        \"expiredAt\": \"2025-01-30T13:56:14.566725\",\n        \"createdAt\": \"2025-01-30T13:55:14.566725\",\n        \"contextId\": \"f7448a9d-9720-4abf-aebb-629f7df07aa7\"\n    },\n    {\n        \"id\": \"10ed031d-6ebf-44cc-9602-7aeb41d096cf\",\n        \"amount\": 846.49,\n        \"method\": \"CARD\",\n        \"status\": \"SUCCESS\",\n        \"orderId\": \"6584bc3d-0bab-4381-9b05-3ebc1ce8a6f1\",\n        \"statusDescription\": \"Please complete the payment before it expires 30-01-2025 13:58:03\",\n        \"expiredAt\": \"2025-01-30T13:58:03.447854\",\n        \"createdAt\": \"2025-01-30T13:57:03.447854\",\n        \"contextId\": \"6584bc3d-0bab-4381-9b05-3ebc1ce8a6f1\"\n    },\n    {\n        \"id\": \"d999d39f-bee2-406c-82a9-cfee85953270\",\n        \"amount\": 668.46,\n        \"method\": \"CARD\",\n        \"status\": \"SUCCESS\",\n        \"orderId\": \"f91b4da8-53dd-4439-93f0-ca754ac7337d\",\n        \"statusDescription\": \"Please complete the payment before it expires 30-01-2025 14:30:38\",\n        \"expiredAt\": \"2025-01-30T14:30:38.96481\",\n        \"createdAt\": \"2025-01-30T14:29:38.96481\",\n        \"contextId\": \"f91b4da8-53dd-4439-93f0-ca754ac7337d\"\n    },\n    {\n        \"id\": \"2b792307-96d1-4919-b5bd-29bf005a13bb\",\n        \"amount\": 200,\n        \"method\": \"CARD\",\n        \"status\": \"FAILED\",\n        \"orderId\": \"df872b8d-fd3a-4afa-af3d-2efbb9a508f2\",\n        \"statusDescription\": \"Payment failed\",\n        \"expiredAt\": null,\n        \"createdAt\": \"2025-01-30T14:30:52.916814\",\n        \"contextId\": \"df872b8d-fd3a-4afa-af3d-2efbb9a508f2\"\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "2. Get payment by id",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is present\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\");",
+									"});",
+									"",
+									"pm.test(\"Content-Type is text/event-stream\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Your test name\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.id).to.not.empty;",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{paymentHost}}/payments/{{currentPaymentId}}",
+							"host": [
+								"{{paymentHost}}"
+							],
+							"path": [
+								"payments",
+								"{{currentPaymentId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Inventory",
+			"item": [
+				{
+					"name": "1. Get all items",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is present\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\");",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response body is not empty\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.not.empty;",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{inventoryHost}}/items",
+							"host": [
+								"{{inventoryHost}}"
+							],
+							"path": [
+								"items"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Not empty",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{inventoryHost}}/items",
+									"host": [
+										"{{inventoryHost}}"
+									],
+									"path": [
+										"items"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Method"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Headers"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 27 Jan 2025 23:42:35 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": \"adc8ec00-57b2-4024-969f-a0fdb2bfc734\",\n        \"name\": \"Item-0\",\n        \"image\": \"https://picsum.photos/id/0/400/300\",\n        \"price\": 8.76,\n        \"quantity\": 33\n    },\n    {\n        \"id\": \"6538c888-76cd-4c95-9cf8-b62e0d7ccec7\",\n        \"name\": \"Item-1\",\n        \"image\": \"https://picsum.photos/id/1/400/300\",\n        \"price\": 76.06,\n        \"quantity\": 5\n    },\n    {\n        \"id\": \"54f45e04-37d1-4613-a483-8d3119d8c7d1\",\n        \"name\": \"Item-2\",\n        \"image\": \"https://picsum.photos/id/2/400/300\",\n        \"price\": 69.63,\n        \"quantity\": 30\n    },\n    {\n        \"id\": \"5f19a902-5e3c-49e7-9945-e71a1ae938f6\",\n        \"name\": \"Item-3\",\n        \"image\": \"https://picsum.photos/id/3/400/300\",\n        \"price\": 77.23,\n        \"quantity\": 29\n    },\n    {\n        \"id\": \"7d12f873-fc53-4f37-817b-e08983a17e2d\",\n        \"name\": \"Item-4\",\n        \"image\": \"https://picsum.photos/id/4/400/300\",\n        \"price\": 80.47,\n        \"quantity\": 7\n    },\n    {\n        \"id\": \"3d9a1bd5-5eab-4f14-82f0-1089efec07a0\",\n        \"name\": \"Item-5\",\n        \"image\": \"https://picsum.photos/id/5/400/300\",\n        \"price\": 49.51,\n        \"quantity\": 1\n    },\n    {\n        \"id\": \"8b89d56c-cd04-47e9-8d65-ff629bae1d26\",\n        \"name\": \"Item-6\",\n        \"image\": \"https://picsum.photos/id/6/400/300\",\n        \"price\": 71,\n        \"quantity\": 18\n    },\n    {\n        \"id\": \"52b09363-474f-4f98-b7fd-761b6c6ae0f0\",\n        \"name\": \"Item-7\",\n        \"image\": \"https://picsum.photos/id/7/400/300\",\n        \"price\": 21.77,\n        \"quantity\": 4\n    },\n    {\n        \"id\": \"d3fdc2cd-7466-47c3-83b2-7c1f3198d9b8\",\n        \"name\": \"Item-8\",\n        \"image\": \"https://picsum.photos/id/8/400/300\",\n        \"price\": 49.55,\n        \"quantity\": 29\n    },\n    {\n        \"id\": \"ffa24474-4568-47b3-a026-ea6cd0b593d4\",\n        \"name\": \"Item-9\",\n        \"image\": \"https://picsum.photos/id/9/400/300\",\n        \"price\": 85.95,\n        \"quantity\": 4\n    },\n    {\n        \"id\": \"43282488-5ddd-4a31-8e8d-1a57fd66d56a\",\n        \"name\": \"Item-10\",\n        \"image\": \"https://picsum.photos/id/10/400/300\",\n        \"price\": 98.29,\n        \"quantity\": 6\n    },\n    {\n        \"id\": \"9343aab8-2c48-4dcc-bfba-eef01be5f163\",\n        \"name\": \"Item-11\",\n        \"image\": \"https://picsum.photos/id/11/400/300\",\n        \"price\": 7.08,\n        \"quantity\": 48\n    },\n    {\n        \"id\": \"88ac17d6-d7f7-4b56-920c-52b659ef6c68\",\n        \"name\": \"Item-12\",\n        \"image\": \"https://picsum.photos/id/12/400/300\",\n        \"price\": 91.26,\n        \"quantity\": 40\n    },\n    {\n        \"id\": \"1f43f8ea-933d-4d0b-b4e9-dc550773ff05\",\n        \"name\": \"Item-13\",\n        \"image\": \"https://picsum.photos/id/13/400/300\",\n        \"price\": 4.52,\n        \"quantity\": 48\n    },\n    {\n        \"id\": \"9bf8745b-6087-4320-998b-f06c80610af3\",\n        \"name\": \"Item-14\",\n        \"image\": \"https://picsum.photos/id/14/400/300\",\n        \"price\": 3.1,\n        \"quantity\": 5\n    },\n    {\n        \"id\": \"04fd71cb-a07a-46cc-981c-f34ec90db5a0\",\n        \"name\": \"Item-15\",\n        \"image\": \"https://picsum.photos/id/15/400/300\",\n        \"price\": 39.69,\n        \"quantity\": 26\n    },\n    {\n        \"id\": \"166169ae-f15e-4510-9280-ea542be05d4f\",\n        \"name\": \"Item-16\",\n        \"image\": \"https://picsum.photos/id/16/400/300\",\n        \"price\": 67.8,\n        \"quantity\": 49\n    },\n    {\n        \"id\": \"653b5b80-6716-42c9-8640-9b58c87c657b\",\n        \"name\": \"Item-17\",\n        \"image\": \"https://picsum.photos/id/17/400/300\",\n        \"price\": 58.22,\n        \"quantity\": 11\n    },\n    {\n        \"id\": \"139a0ba5-e9c4-4eff-99fa-709301bb1b5c\",\n        \"name\": \"Item-18\",\n        \"image\": \"https://picsum.photos/id/18/400/300\",\n        \"price\": 73.91,\n        \"quantity\": 42\n    },\n    {\n        \"id\": \"fed65eec-75ff-41de-a9ba-1ae203f948ea\",\n        \"name\": \"Item-19\",\n        \"image\": \"https://picsum.photos/id/19/400/300\",\n        \"price\": 22.88,\n        \"quantity\": 27\n    },\n    {\n        \"id\": \"69495390-6186-4df0-9527-448b5c821b32\",\n        \"name\": \"Item-20\",\n        \"image\": \"https://picsum.photos/id/20/400/300\",\n        \"price\": 97.42,\n        \"quantity\": 15\n    },\n    {\n        \"id\": \"dfdbffe8-186a-47be-979c-05173b636fe5\",\n        \"name\": \"Item-21\",\n        \"image\": \"https://picsum.photos/id/21/400/300\",\n        \"price\": 5.21,\n        \"quantity\": 37\n    },\n    {\n        \"id\": \"704f4086-18da-4076-b9ba-0788a9ff745c\",\n        \"name\": \"Item-22\",\n        \"image\": \"https://picsum.photos/id/22/400/300\",\n        \"price\": 38.14,\n        \"quantity\": 35\n    },\n    {\n        \"id\": \"06e0b19c-9246-445f-9ebc-4914446ea811\",\n        \"name\": \"Item-23\",\n        \"image\": \"https://picsum.photos/id/23/400/300\",\n        \"price\": 49.62,\n        \"quantity\": 11\n    },\n    {\n        \"id\": \"ca792f80-ce83-494c-9c7b-7bed716d644d\",\n        \"name\": \"Item-24\",\n        \"image\": \"https://picsum.photos/id/24/400/300\",\n        \"price\": 47.96,\n        \"quantity\": 28\n    },\n    {\n        \"id\": \"c9551f20-de5c-434b-8d30-a2c5f3826757\",\n        \"name\": \"Item-25\",\n        \"image\": \"https://picsum.photos/id/25/400/300\",\n        \"price\": 27.32,\n        \"quantity\": 38\n    },\n    {\n        \"id\": \"29aff9d0-14bd-4cde-974a-d731eb6ce8d0\",\n        \"name\": \"Item-26\",\n        \"image\": \"https://picsum.photos/id/26/400/300\",\n        \"price\": 75.59,\n        \"quantity\": 6\n    },\n    {\n        \"id\": \"7fdf6e3e-6d94-45e8-8afa-a38a7dd9ea11\",\n        \"name\": \"Item-27\",\n        \"image\": \"https://picsum.photos/id/27/400/300\",\n        \"price\": 27.16,\n        \"quantity\": 37\n    },\n    {\n        \"id\": \"554dde46-45b8-45df-b6cd-10d2cac3e5e2\",\n        \"name\": \"Item-28\",\n        \"image\": \"https://picsum.photos/id/28/400/300\",\n        \"price\": 82.45,\n        \"quantity\": 40\n    },\n    {\n        \"id\": \"f164200a-3c38-4acd-a37c-f8d3d8df4f3f\",\n        \"name\": \"Item-29\",\n        \"image\": \"https://picsum.photos/id/29/400/300\",\n        \"price\": 16,\n        \"quantity\": 42\n    },\n    {\n        \"id\": \"65ca0750-e74d-4a4c-a85a-4b6947694f3a\",\n        \"name\": \"Item-30\",\n        \"image\": \"https://picsum.photos/id/30/400/300\",\n        \"price\": 6.47,\n        \"quantity\": 33\n    },\n    {\n        \"id\": \"9acf3538-d8db-44f7-9ea9-6915ef48f1e6\",\n        \"name\": \"Item-31\",\n        \"image\": \"https://picsum.photos/id/31/400/300\",\n        \"price\": 86.2,\n        \"quantity\": 5\n    },\n    {\n        \"id\": \"c45e4783-c145-45ef-8368-dc8aea00e69d\",\n        \"name\": \"Item-32\",\n        \"image\": \"https://picsum.photos/id/32/400/300\",\n        \"price\": 16.84,\n        \"quantity\": 31\n    },\n    {\n        \"id\": \"b2b7c223-9ea3-4aa0-a56f-9c91cc2074ea\",\n        \"name\": \"Item-33\",\n        \"image\": \"https://picsum.photos/id/33/400/300\",\n        \"price\": 3.97,\n        \"quantity\": 2\n    },\n    {\n        \"id\": \"2ffc2c92-5df1-4152-b23c-9fccf2716a2c\",\n        \"name\": \"Item-34\",\n        \"image\": \"https://picsum.photos/id/34/400/300\",\n        \"price\": 5.74,\n        \"quantity\": 10\n    },\n    {\n        \"id\": \"1bee28ad-615e-4395-9bbb-60c1057717da\",\n        \"name\": \"Item-35\",\n        \"image\": \"https://picsum.photos/id/35/400/300\",\n        \"price\": 89.46,\n        \"quantity\": 4\n    },\n    {\n        \"id\": \"8eca2222-6009-4db8-92de-de03322c870f\",\n        \"name\": \"Item-36\",\n        \"image\": \"https://picsum.photos/id/36/400/300\",\n        \"price\": 18.19,\n        \"quantity\": 9\n    },\n    {\n        \"id\": \"a1e323a0-0dc7-4d2f-8680-69f14d418ec2\",\n        \"name\": \"Item-37\",\n        \"image\": \"https://picsum.photos/id/37/400/300\",\n        \"price\": 99.5,\n        \"quantity\": 9\n    },\n    {\n        \"id\": \"659772d2-81a4-4b24-ba57-8ce4ff2aa835\",\n        \"name\": \"Item-38\",\n        \"image\": \"https://picsum.photos/id/38/400/300\",\n        \"price\": 23.19,\n        \"quantity\": 33\n    },\n    {\n        \"id\": \"14643d9b-4a8d-45ab-b4e5-f05d6b3227b2\",\n        \"name\": \"Item-39\",\n        \"image\": \"https://picsum.photos/id/39/400/300\",\n        \"price\": 9.41,\n        \"quantity\": 16\n    },\n    {\n        \"id\": \"b7f8bb00-5c43-4857-9cb8-48999536603c\",\n        \"name\": \"Item-40\",\n        \"image\": \"https://picsum.photos/id/40/400/300\",\n        \"price\": 47.56,\n        \"quantity\": 21\n    },\n    {\n        \"id\": \"45ca4854-a30f-48fa-9618-6956f641c958\",\n        \"name\": \"Item-41\",\n        \"image\": \"https://picsum.photos/id/41/400/300\",\n        \"price\": 48.92,\n        \"quantity\": 6\n    },\n    {\n        \"id\": \"fb7cd765-de7d-4b01-bafe-ec35791f6101\",\n        \"name\": \"Item-42\",\n        \"image\": \"https://picsum.photos/id/42/400/300\",\n        \"price\": 47.82,\n        \"quantity\": 42\n    },\n    {\n        \"id\": \"860d8c04-4499-44c7-9b07-892062f86099\",\n        \"name\": \"Item-43\",\n        \"image\": \"https://picsum.photos/id/43/400/300\",\n        \"price\": 12.49,\n        \"quantity\": 1\n    },\n    {\n        \"id\": \"7a1c5ebb-cdc1-4d1b-92c5-75a448203986\",\n        \"name\": \"Item-44\",\n        \"image\": \"https://picsum.photos/id/44/400/300\",\n        \"price\": 0.96,\n        \"quantity\": 8\n    },\n    {\n        \"id\": \"9ad31d05-78ba-4050-a066-9c9723379200\",\n        \"name\": \"Item-45\",\n        \"image\": \"https://picsum.photos/id/45/400/300\",\n        \"price\": 63.75,\n        \"quantity\": 30\n    },\n    {\n        \"id\": \"fe4372b0-4acc-4168-b70a-7fabfa8525b1\",\n        \"name\": \"Item-46\",\n        \"image\": \"https://picsum.photos/id/46/400/300\",\n        \"price\": 89.42,\n        \"quantity\": 42\n    },\n    {\n        \"id\": \"868b4046-90d7-482c-871b-f4efc6da5170\",\n        \"name\": \"Item-47\",\n        \"image\": \"https://picsum.photos/id/47/400/300\",\n        \"price\": 88.67,\n        \"quantity\": 44\n    },\n    {\n        \"id\": \"7fff57ef-e786-42bf-a797-955acdc7d7c8\",\n        \"name\": \"Item-48\",\n        \"image\": \"https://picsum.photos/id/48/400/300\",\n        \"price\": 6.3,\n        \"quantity\": 1\n    },\n    {\n        \"id\": \"2833848c-2f84-4958-a3fe-7117a2899857\",\n        \"name\": \"Item-49\",\n        \"image\": \"https://picsum.photos/id/49/400/300\",\n        \"price\": 70.18,\n        \"quantity\": 14\n    },\n    {\n        \"id\": \"57baa61d-5db8-4b64-8bc4-b61fbd9d4fea\",\n        \"name\": \"Item-50\",\n        \"image\": \"https://picsum.photos/id/50/400/300\",\n        \"price\": 86.44,\n        \"quantity\": 45\n    },\n    {\n        \"id\": \"b296790f-f357-4792-be3b-6ea01c72350b\",\n        \"name\": \"Item-51\",\n        \"image\": \"https://picsum.photos/id/51/400/300\",\n        \"price\": 40.53,\n        \"quantity\": 27\n    },\n    {\n        \"id\": \"2118b2ba-72b7-4267-9021-2094041a4e8b\",\n        \"name\": \"Item-52\",\n        \"image\": \"https://picsum.photos/id/52/400/300\",\n        \"price\": 17.92,\n        \"quantity\": 50\n    },\n    {\n        \"id\": \"0c790a45-ed2a-43a9-9de0-4987beeba615\",\n        \"name\": \"Item-53\",\n        \"image\": \"https://picsum.photos/id/53/400/300\",\n        \"price\": 68.53,\n        \"quantity\": 16\n    },\n    {\n        \"id\": \"39ebf598-a6b2-4e1e-97cc-1328d0dfa5d7\",\n        \"name\": \"Item-54\",\n        \"image\": \"https://picsum.photos/id/54/400/300\",\n        \"price\": 16.04,\n        \"quantity\": 25\n    },\n    {\n        \"id\": \"89a0b745-d7cc-4847-a828-cf675957ab9c\",\n        \"name\": \"Item-55\",\n        \"image\": \"https://picsum.photos/id/55/400/300\",\n        \"price\": 89.07,\n        \"quantity\": 49\n    },\n    {\n        \"id\": \"fa84ed48-193b-457e-a168-7f95f3b9c4e7\",\n        \"name\": \"Item-56\",\n        \"image\": \"https://picsum.photos/id/56/400/300\",\n        \"price\": 5.28,\n        \"quantity\": 22\n    },\n    {\n        \"id\": \"21aa38e5-e309-42aa-9a59-70361d6a565c\",\n        \"name\": \"Item-57\",\n        \"image\": \"https://picsum.photos/id/57/400/300\",\n        \"price\": 93.93,\n        \"quantity\": 1\n    },\n    {\n        \"id\": \"70195f93-1344-4c71-a956-9437bea9e964\",\n        \"name\": \"Item-58\",\n        \"image\": \"https://picsum.photos/id/58/400/300\",\n        \"price\": 39.14,\n        \"quantity\": 9\n    },\n    {\n        \"id\": \"d2278741-d487-488d-8301-411bca92593c\",\n        \"name\": \"Item-59\",\n        \"image\": \"https://picsum.photos/id/59/400/300\",\n        \"price\": 26.89,\n        \"quantity\": 13\n    },\n    {\n        \"id\": \"f36be5cd-e733-40fa-b7bc-1d4e48afbcbf\",\n        \"name\": \"Item-60\",\n        \"image\": \"https://picsum.photos/id/60/400/300\",\n        \"price\": 41.96,\n        \"quantity\": 7\n    },\n    {\n        \"id\": \"e2aa79e1-7045-4d0f-9096-61283f219c56\",\n        \"name\": \"Item-61\",\n        \"image\": \"https://picsum.photos/id/61/400/300\",\n        \"price\": 92.43,\n        \"quantity\": 20\n    },\n    {\n        \"id\": \"0062f1dc-2d01-45c2-b5ae-569401c0aad4\",\n        \"name\": \"Item-62\",\n        \"image\": \"https://picsum.photos/id/62/400/300\",\n        \"price\": 75.58,\n        \"quantity\": 27\n    },\n    {\n        \"id\": \"b3b75bb0-f313-4b1a-be8e-d44e61902f49\",\n        \"name\": \"Item-63\",\n        \"image\": \"https://picsum.photos/id/63/400/300\",\n        \"price\": 16.69,\n        \"quantity\": 41\n    },\n    {\n        \"id\": \"a76478a1-f7de-416d-bd8a-508386d5d280\",\n        \"name\": \"Item-64\",\n        \"image\": \"https://picsum.photos/id/64/400/300\",\n        \"price\": 66.29,\n        \"quantity\": 17\n    },\n    {\n        \"id\": \"2829d27a-ec67-475d-8b53-f98c74cfb01c\",\n        \"name\": \"Item-65\",\n        \"image\": \"https://picsum.photos/id/65/400/300\",\n        \"price\": 30.34,\n        \"quantity\": 27\n    },\n    {\n        \"id\": \"342a6d88-16a3-47ce-b303-72dc52763c55\",\n        \"name\": \"Item-66\",\n        \"image\": \"https://picsum.photos/id/66/400/300\",\n        \"price\": 64.17,\n        \"quantity\": 42\n    },\n    {\n        \"id\": \"f889edfb-8c02-400d-a189-9aabc31d70ab\",\n        \"name\": \"Item-67\",\n        \"image\": \"https://picsum.photos/id/67/400/300\",\n        \"price\": 81.38,\n        \"quantity\": 12\n    },\n    {\n        \"id\": \"342849ed-e643-44bf-9fbb-830dd0be6f3c\",\n        \"name\": \"Item-68\",\n        \"image\": \"https://picsum.photos/id/68/400/300\",\n        \"price\": 48.73,\n        \"quantity\": 44\n    },\n    {\n        \"id\": \"211d6396-7b31-40e7-a1c8-b51be8a0607e\",\n        \"name\": \"Item-69\",\n        \"image\": \"https://picsum.photos/id/69/400/300\",\n        \"price\": 31.74,\n        \"quantity\": 22\n    },\n    {\n        \"id\": \"6ff15456-3743-44a4-b86f-981f086122c3\",\n        \"name\": \"Item-70\",\n        \"image\": \"https://picsum.photos/id/70/400/300\",\n        \"price\": 19.92,\n        \"quantity\": 17\n    },\n    {\n        \"id\": \"ea4788e7-da8e-4569-9867-aae31aea94f0\",\n        \"name\": \"Item-71\",\n        \"image\": \"https://picsum.photos/id/71/400/300\",\n        \"price\": 94.97,\n        \"quantity\": 14\n    },\n    {\n        \"id\": \"b8f3c65c-01a8-4851-8879-e31507d60a63\",\n        \"name\": \"Item-72\",\n        \"image\": \"https://picsum.photos/id/72/400/300\",\n        \"price\": 73.95,\n        \"quantity\": 29\n    },\n    {\n        \"id\": \"c4ecf22f-8b71-4999-8e34-c8d8241b776a\",\n        \"name\": \"Item-73\",\n        \"image\": \"https://picsum.photos/id/73/400/300\",\n        \"price\": 47.96,\n        \"quantity\": 34\n    },\n    {\n        \"id\": \"5d96de5d-963e-46fb-ae77-ee16b1bcb1c2\",\n        \"name\": \"Item-74\",\n        \"image\": \"https://picsum.photos/id/74/400/300\",\n        \"price\": 82.85,\n        \"quantity\": 17\n    },\n    {\n        \"id\": \"1201a879-a059-4801-901b-8ff00cf8c4ef\",\n        \"name\": \"Item-75\",\n        \"image\": \"https://picsum.photos/id/75/400/300\",\n        \"price\": 70.27,\n        \"quantity\": 16\n    },\n    {\n        \"id\": \"b2749559-8ee6-4fe0-92e5-2266de7cda33\",\n        \"name\": \"Item-76\",\n        \"image\": \"https://picsum.photos/id/76/400/300\",\n        \"price\": 29.42,\n        \"quantity\": 34\n    },\n    {\n        \"id\": \"ccf6631d-d67e-46aa-a12a-41ad4cfa6e9d\",\n        \"name\": \"Item-77\",\n        \"image\": \"https://picsum.photos/id/77/400/300\",\n        \"price\": 42.99,\n        \"quantity\": 33\n    },\n    {\n        \"id\": \"26fe894e-49b9-4f0c-80aa-733fa91ef8d5\",\n        \"name\": \"Item-78\",\n        \"image\": \"https://picsum.photos/id/78/400/300\",\n        \"price\": 43.19,\n        \"quantity\": 13\n    },\n    {\n        \"id\": \"58606565-bebf-4579-9b74-352e63e9c474\",\n        \"name\": \"Item-79\",\n        \"image\": \"https://picsum.photos/id/79/400/300\",\n        \"price\": 56.77,\n        \"quantity\": 10\n    },\n    {\n        \"id\": \"e11272b7-267e-47e2-aebe-e7d88589e258\",\n        \"name\": \"Item-80\",\n        \"image\": \"https://picsum.photos/id/80/400/300\",\n        \"price\": 7.65,\n        \"quantity\": 50\n    },\n    {\n        \"id\": \"facc39de-dba3-4a3f-bc28-8a943a1a1f08\",\n        \"name\": \"Item-81\",\n        \"image\": \"https://picsum.photos/id/81/400/300\",\n        \"price\": 85.03,\n        \"quantity\": 49\n    },\n    {\n        \"id\": \"66ec18d8-3f13-46f3-9d24-54c1038f3480\",\n        \"name\": \"Item-82\",\n        \"image\": \"https://picsum.photos/id/82/400/300\",\n        \"price\": 88.84,\n        \"quantity\": 19\n    },\n    {\n        \"id\": \"ef5b0a23-2af8-40e2-b8a9-f938b77ffab9\",\n        \"name\": \"Item-83\",\n        \"image\": \"https://picsum.photos/id/83/400/300\",\n        \"price\": 39.31,\n        \"quantity\": 39\n    },\n    {\n        \"id\": \"0cde3d49-6863-4e4f-8f52-cb12c5738e58\",\n        \"name\": \"Item-84\",\n        \"image\": \"https://picsum.photos/id/84/400/300\",\n        \"price\": 36.86,\n        \"quantity\": 16\n    },\n    {\n        \"id\": \"5e733eef-4604-4d81-9ba8-9804222f1976\",\n        \"name\": \"Item-85\",\n        \"image\": \"https://picsum.photos/id/85/400/300\",\n        \"price\": 54.5,\n        \"quantity\": 7\n    },\n    {\n        \"id\": \"f8ed8b2a-bd87-4fc7-b4e6-4a906650b96f\",\n        \"name\": \"Item-86\",\n        \"image\": \"https://picsum.photos/id/86/400/300\",\n        \"price\": 20,\n        \"quantity\": 30\n    },\n    {\n        \"id\": \"829271d4-9254-4b5b-9957-e1a58eddc2fd\",\n        \"name\": \"Item-87\",\n        \"image\": \"https://picsum.photos/id/87/400/300\",\n        \"price\": 45.22,\n        \"quantity\": 8\n    },\n    {\n        \"id\": \"b1a08d0f-8370-4513-a468-09473dfa1998\",\n        \"name\": \"Item-88\",\n        \"image\": \"https://picsum.photos/id/88/400/300\",\n        \"price\": 84.55,\n        \"quantity\": 10\n    },\n    {\n        \"id\": \"220e996c-b2e5-496c-b6dd-b0886ac5957b\",\n        \"name\": \"Item-89\",\n        \"image\": \"https://picsum.photos/id/89/400/300\",\n        \"price\": 62.43,\n        \"quantity\": 50\n    },\n    {\n        \"id\": \"e2e5b0ef-0fac-4963-8e98-c1d8f669cf70\",\n        \"name\": \"Item-90\",\n        \"image\": \"https://picsum.photos/id/90/400/300\",\n        \"price\": 9.66,\n        \"quantity\": 8\n    },\n    {\n        \"id\": \"b2c1bc43-e9e8-4da7-9e8e-40c0e569818a\",\n        \"name\": \"Item-91\",\n        \"image\": \"https://picsum.photos/id/91/400/300\",\n        \"price\": 75.21,\n        \"quantity\": 21\n    },\n    {\n        \"id\": \"f3cb903b-600f-4a31-b34b-444b6e71afa2\",\n        \"name\": \"Item-92\",\n        \"image\": \"https://picsum.photos/id/92/400/300\",\n        \"price\": 51.15,\n        \"quantity\": 22\n    },\n    {\n        \"id\": \"8c1b26cf-c63f-4def-b375-67158f66910c\",\n        \"name\": \"Item-93\",\n        \"image\": \"https://picsum.photos/id/93/400/300\",\n        \"price\": 56.55,\n        \"quantity\": 50\n    },\n    {\n        \"id\": \"00835ab8-26f8-489d-99d2-573d6d026f47\",\n        \"name\": \"Item-94\",\n        \"image\": \"https://picsum.photos/id/94/400/300\",\n        \"price\": 9.42,\n        \"quantity\": 38\n    },\n    {\n        \"id\": \"a42eb049-b846-4b80-8aea-c4ae55ea4398\",\n        \"name\": \"Item-95\",\n        \"image\": \"https://picsum.photos/id/95/400/300\",\n        \"price\": 22.94,\n        \"quantity\": 2\n    },\n    {\n        \"id\": \"1aa8cb94-4ebd-4feb-b240-cbd716bff07b\",\n        \"name\": \"Item-96\",\n        \"image\": \"https://picsum.photos/id/96/400/300\",\n        \"price\": 24.74,\n        \"quantity\": 50\n    },\n    {\n        \"id\": \"86362214-fa77-40a5-b882-5cc64614d142\",\n        \"name\": \"Item-97\",\n        \"image\": \"https://picsum.photos/id/97/400/300\",\n        \"price\": 21.43,\n        \"quantity\": 50\n    },\n    {\n        \"id\": \"1138dd5e-44a3-4481-92a4-6843f7e29bf2\",\n        \"name\": \"Item-98\",\n        \"image\": \"https://picsum.photos/id/98/400/300\",\n        \"price\": 38.28,\n        \"quantity\": 42\n    },\n    {\n        \"id\": \"93bbef7e-4f3c-44bc-b95a-cafe0d7bb13f\",\n        \"name\": \"Item-99\",\n        \"image\": \"https://picsum.photos/id/99/400/300\",\n        \"price\": 13.23,\n        \"quantity\": 46\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "2. Get by id",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is present\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\");",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response body is not empty\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.id).to.not.empty;",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{inventoryHost}}/items/{{currentItemId}}",
+							"host": [
+								"{{inventoryHost}}"
+							],
+							"path": [
+								"items",
+								"{{currentItemId}}"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Exist by id",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{inventoryHost}}/items/{{currentItemId}}",
+									"host": [
+										"{{inventoryHost}}"
+									],
+									"path": [
+										"items",
+										"{{currentItemId}}"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Method"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Headers"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 27 Jan 2025 23:44:25 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": \"adc8ec00-57b2-4024-969f-a0fdb2bfc734\",\n    \"name\": \"Item-0\",\n    \"image\": \"https://picsum.photos/id/0/400/300\",\n    \"price\": 8.76,\n    \"quantity\": 33\n}"
+						}
+					]
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "orderHost",
+			"value": "localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "paymentHost",
+			"value": "localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "inventoryHost",
+			"value": "localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "currentOrderId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "currentPaymentId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "currentItemId",
+			"value": "64fe968a-ac00-447c-9e94-4c6590821534",
+			"type": "string"
+		}
+	]
+}

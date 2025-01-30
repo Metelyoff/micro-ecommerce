@@ -1,0 +1,375 @@
+networks:
+  kafka:
+    name: kafka
+    driver: bridge
+  debezium:
+    name: debezium
+    driver: bridge
+  orders:
+    name: orders
+    driver: bridge
+  payment:
+    name: payment
+    driver: bridge
+  inventory:
+    name: inventory
+    driver: bridge
+  orders_db:
+    name: orders_db
+    driver: bridge
+  payment_db:
+    name: payment_db
+    driver: bridge
+  inventory_db:
+    name: inventory_db
+    driver: bridge
+
+volumes:
+  order_service_data:
+    name: order_service_data
+    driver: local
+  payment_service_data:
+    name: payment_service_data
+    driver: local
+  inventory_service_data:
+    name: inventory_service_data
+    driver: local
+
+services:
+
+# TODO: build and publish outbox dependency to the github maven repository
+#  outbox:
+#    build:
+#      context: ./outbox
+#      args:
+##        MAVEN_URL: $MAVEN_URL
+##        MAVEN_USERNAME: $MAVEN_USERNAME
+##        MAVEN_TOKEN: $MAVEN_TOKEN
+#    container_name: outbox
+#    environment:
+##      MAVEN_URL: $MAVEN_URL
+##      MAVEN_USERNAME: $MAVEN_USERNAME
+##      MAVEN_TOKEN: $MAVEN_TOKEN
+#    restart: no
+
+  order-service-db:
+    image: postgres:15
+    container_name: order-service-db
+    ports:
+      - "5433:5433"
+    networks:
+      - orders
+      - orders_db
+      - debezium
+    volumes:
+      - order_service_data:/var/lib/postgresql/data
+      - ./order-service/init-db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./order-service/postgresql.conf:/etc/postgresql/postgresql.conf
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf -p 5433
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: order_service_db
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -h order-service-db -p 5433" ]
+      interval: 3s
+      retries: 3
+      start_period: 2s
+      timeout: 2s
+    restart: always
+
+  payment-service-db:
+    image: postgres:15
+    container_name: payment-service-db
+    ports:
+      - "5434:5434"
+    networks:
+      - payment
+      - payment_db
+      - debezium
+    volumes:
+      - payment_service_data:/var/lib/postgresql/data
+      - ./payment-service/init-db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./payment-service/postgresql.conf:/etc/postgresql/postgresql.conf
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf -p 5434
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: payment_service_db
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -h payment-service-db -p 5434" ]
+      interval: 3s
+      retries: 3
+      start_period: 2s
+      timeout: 2s
+    restart: always
+
+  inventory-service-db:
+    image: postgres:15
+    container_name: inventory-service-db
+    ports:
+      - "5435:5435"
+    networks:
+      - inventory
+      - inventory_db
+      - debezium
+    volumes:
+      - inventory_service_data:/var/lib/postgresql/data
+      - ./inventory-service/init-db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./inventory-service/postgresql.conf:/etc/postgresql/postgresql.conf
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf -p 5435
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: inventory_service_db
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -h inventory-service-db -p 5435" ]
+      interval: 3s
+      retries: 3
+      start_period: 2s
+      timeout: 2s
+    restart: always
+
+  kafka:
+    image: apache/kafka:latest
+    hostname: kafka
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    networks:
+      - kafka
+      - debezium
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      CLUSTER_ID: ecommerce
+    restart: always
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui
+    container_name: kafka-ui
+    platform: linux/amd64
+    ports:
+      - "8092:8080"
+    networks:
+      - kafka
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=ecommerce
+      - DYNAMIC_CONFIG_ENABLED=true
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:29092
+      - SPRING_PROFILES_ACTIVE=prod
+    depends_on:
+      - kafka
+
+  debezium:
+    image: debezium/connect:2.3
+    container_name: debezium
+    ports:
+      - "8083:8083"
+    networks:
+      - debezium
+      - kafka
+      - orders_db
+      - payment_db
+      - inventory_db
+    environment:
+      BOOTSTRAP_SERVERS: kafka:29092
+      GROUP_ID: 1
+      CONFIG_STORAGE_TOPIC: debezium_config
+      OFFSET_STORAGE_TOPIC: debezium_offsets
+      STATUS_STORAGE_TOPIC: debezium_status
+      KEY_CONVERTER_SCHEMAS_ENABLE: false
+      VALUE_CONVERTER_SCHEMAS_ENABLE: false
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -s -o /dev/null -w \"%{http_code}\" http://debezium:8083/connectors | grep 200" ]
+      interval: 10s
+      retries: 5
+      start_period: 15s
+      timeout: 2s
+    depends_on:
+      - kafka
+      - order-service-db
+      - payment-service-db
+      - inventory-service-db
+    restart: always
+
+  debezium-ui:
+    image: debezium/debezium-ui
+    container_name: debezium-ui
+    platform: linux/amd64
+    ports:
+      - "8089:8080"
+    networks:
+      - debezium
+    environment:
+      - KAFKA_CONNECT_URIS=http://debezium:8083
+    depends_on:
+      - debezium
+
+  debezium-connector:
+    image: curlimages/curl:7.87.0
+    container_name: debezium-connector
+    depends_on:
+      - debezium
+      - kafka
+      - inventory-service-db
+      - order-service-db
+      - payment-service-db
+    networks:
+      - debezium
+    command: >
+      sh -c "
+      until curl -s http://debezium:8083/connectors; do sleep 5; done;
+      curl -X POST -H 'Content-Type: application/json' --data '@/connectors/order-service-connector.json' http://debezium:8083/connectors &&
+      curl -X POST -H 'Content-Type: application/json' --data '@/connectors/payment-service-connector.json' http://debezium:8083/connectors &&
+      curl -X POST -H 'Content-Type: application/json' --data '@/connectors/inventory-service-connector.json' http://debezium:8083/connectors
+      "
+    volumes:
+      - ./debezium-connectors:/connectors
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -s -o /dev/null -w '%{http_code}' http://debezium:8083/connectors/order-service-connector | grep -q 200 && curl -s -o /dev/null -w '%{http_code}' http://debezium:8083/connectors/payment-service-connector | grep -q 200 && curl -s -o /dev/null -w '%{http_code}' http://debezium:8083/connectors/inventory-service-connector | grep -q 200" ]
+      interval: 5s
+      retries: 5
+      start_period: 5s
+      timeout: 15s
+    restart: no
+
+  payment-service:
+    build:
+      context: ./payment-service
+      args:
+        MAVEN_URL: https://maven.pkg.github.com/Metelyoff/maven-repository
+        MAVEN_USERNAME: Metelyoff
+        MAVEN_TOKEN: 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
+    container_name: payment-service
+    environment:
+      DATABASE_URL: jdbc:postgresql://payment-service-db:5434/payment_service_db
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: postgres
+      KAFKA_URI: kafka:29092
+      DEBEZIUM_DESTINATION: payment-service.public.outbox_events
+      OUTBOX_TOPICS: order-service.public.outbox_events,inventory-service.public.outbox_events
+      EXPIRE_DELAY_MILLIS: 60000
+    ports:
+      - "8085:8080"
+    networks:
+      - payment
+      - payment_db
+      - kafka
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://payment-service:8080/actuator/health" ]
+      interval: 3s
+      retries: 10
+      start_period: 5s
+    depends_on:
+      - kafka
+      - debezium
+      - payment-service-db
+    restart: always
+
+  inventory-service:
+    build:
+      context: ./inventory-service
+      args:
+        MAVEN_URL: https://maven.pkg.github.com/Metelyoff/maven-repository
+        MAVEN_USERNAME: Metelyoff
+        MAVEN_TOKEN: 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
+    container_name: inventory-service
+    environment:
+      DATABASE_URL: jdbc:postgresql://inventory-service-db:5435/inventory_service_db
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: postgres
+      KAFKA_URI: kafka:29092
+      DEBEZIUM_DESTINATION: inventory-service.public.outbox_events
+      OUTBOX_TOPICS: order-service.public.outbox_events,payment-service.public.outbox_events
+    ports:
+      - "8084:8080"
+    networks:
+      - inventory
+      - inventory_db
+      - kafka
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://inventory-service:8080/actuator/health" ]
+      interval: 3s
+      retries: 10
+      start_period: 5s
+    depends_on:
+      - kafka
+      - debezium
+      - inventory-service-db
+    restart: always
+
+  order-service:
+    build:
+      context: ./order-service
+      args:
+        MAVEN_URL: https://maven.pkg.github.com/Metelyoff/maven-repository
+        MAVEN_USERNAME: Metelyoff
+        MAVEN_TOKEN: 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
+    container_name: order-service
+    environment:
+      DATABASE_URL: jdbc:postgresql://order-service-db:5433/order_service_db
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: postgres
+      KAFKA_URI: kafka:29092
+      DEBEZIUM_DESTINATION: order-service.public.outbox_events
+      OUTBOX_TOPICS: payment-service.public.outbox_events,inventory-service.public.outbox_events
+    ports:
+      - "8086:8080"
+    networks:
+      - orders
+      - orders_db
+      - kafka
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://order-service:8080/actuator/health" ]
+      interval: 30s
+      retries: 10
+      start_period: 5s
+    depends_on:
+      - kafka
+      - debezium
+      - order-service-db
+    restart: always
+
+  web:
+    build:
+      context: ./webapp
+      args:
+        REACT_APP_PRODUCTS_API_URL: "http://localhost:8084"
+        REACT_APP_ORDERS_API_URL: "http://localhost:8086"
+        REACT_APP_PAYMENTS_API_URL: "http://localhost:8085"
+    container_name: web
+    ports:
+      - "80:80"
+    environment:
+      - REACT_APP_PRODUCTS_API_URL=http://localhost:8084
+      - REACT_APP_ORDERS_API_URL=http://localhost:8086
+      - REACT_APP_PAYMENTS_API_URL=http://localhost:8085
+    networks:
+      - orders
+      - inventory
+      - payment
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost/" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    depends_on:
+      - order-service
+      - payment-service
+      - inventory-service
+    restart: always

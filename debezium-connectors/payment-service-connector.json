@@ -1,0 +1,26 @@
+{
+  "name": "payment-service-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "tasks.max": "1",
+    "database.hostname": "payment-service-db",
+    "database.port": "5434",
+    "database.user": "postgres",
+    "database.password": "postgres",
+    "database.dbname": "payment_service_db",
+    "database.server.name": "payment_service",
+    "plugin.name": "pgoutput",
+    "slot.name": "debezium_slot",
+    "topic.prefix": "payment-service",
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "false",
+    "decimal.handling.mode": "string",
+    "include.transaction": true,
+    "after.state.only": "true",
+    "transforms": "unwrap",
+    "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+    "transforms.unwrap.drop.tombstones": "true",
+    "table.include.list": "public.outbox_events"
+  }
+}

@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: inventory-service
+    outbox:
+      listener:
+        topics: ${OUTBOX_TOPICS}
+  profiles:
+    active: dev
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+  sql:
+    init:
+      mode: never
+  kafka:
+    bootstrap-servers: ${KAFKA_URI:localhost:29092}
+    consumer:
+      group-id: inventory-group
+      auto-offset-reset: earliest
+      enable-auto-commit: true
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json:
+          trusted.packages: com.ecommerce.outbox
+          value:
+            default.type: com.ecommerce.outbox.events.OutboxEvent
+
+management:
+  endpoint:
+    health:
+      show-details: always
+      cache:
+        time-to-live: 0s
+  endpoints:
+    web:
+      exposure:
+        include: [ "info", "health", "metrics", "logfile", "loggers", "env" ]

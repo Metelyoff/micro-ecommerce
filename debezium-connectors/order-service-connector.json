@@ -1,0 +1,26 @@
+{
+  "name": "order-service-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "tasks.max": "1",
+    "database.hostname": "order-service-db",
+    "database.port": "5433",
+    "database.user": "postgres",
+    "database.password": "postgres",
+    "database.dbname": "order_service_db",
+    "database.server.name": "order_service",
+    "plugin.name": "pgoutput",
+    "slot.name": "debezium_slot",
+    "topic.prefix": "order-service",
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "false",
+    "decimal.handling.mode": "string",
+    "include.transaction": true,
+    "after.state.only": "true",
+    "transforms": "unwrap",
+    "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+    "transforms.unwrap.drop.tombstones": "true",
+    "table.include.list": "public.outbox_events"
+  }
+}
