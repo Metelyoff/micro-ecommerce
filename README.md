@@ -129,10 +129,15 @@ sequenceDiagram
    participant Broker as Message Broker (Kafka)
 
    Service->>DB: Begin Database Transaction
-   Service->>DB: Insert/Update Business Data
-   Service->>Outbox: Insert OutboxEvent
-   Outbox->>DB: OutboxEvent committed
-   Service->>DB: Commit Transaction
+   alt Transaction committed
+      Service->>DB: Insert/Update Business Data
+      Service->>Outbox: Insert PROCEED OutboxEvent
+      Outbox->>DB: OutboxEvent committed
+      Service->>DB: Commit Transaction
+   else Transaction rollbacked
+      Service->>Outbox: Insert async FAILED OutboxEvent
+      Outbox->>DB: OutboxEvent committed
+   end
    CDC-->>DB: Polling-based reading DB logs (outbox table in that case)
    DB->>CDC: Transaction logs info
    CDC->>Broker: Publish OutboxEvent (asynchronously)
