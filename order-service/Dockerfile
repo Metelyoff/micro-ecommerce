@@ -1,10 +1,7 @@
 FROM gradle:jdk17 AS builder
 WORKDIR /app
-ARG MAVEN_URL
-ARG MAVEN_USERNAME
-ARG MAVEN_TOKEN
 COPY . .
-RUN MAVEN_URL=$MAVEN_URL MAVEN_USERNAME=$MAVEN_USERNAME MAVEN_TOKEN=$MAVEN_TOKEN ./gradlew clean build --no-daemon
+RUN ./gradlew clean build --no-daemon
 
 FROM openjdk:17-jdk-slim
 WORKDIR /app
