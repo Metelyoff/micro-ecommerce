@@ -183,7 +183,7 @@ To explore and test the APIs, use the Postman collection. You can either downloa
 
 - [Download Postman Collection](https://github.com/Metelyoff/micro-ecommerce/blob/main/Micro%20E-commerce.postman_collection.json)
 
-[<img src="https://run.pstmn.io/button.svg" alt="Run In Postman" style="width: 128px; height: 32px;">](https://god.gw.postman.com/run-collection/24504602-96dafe1f-3aae-4d9f-8901-df77df17cf2e?action=collection%2Ffork&source=rip_markdown&collection-url=entityId%3D24504602-96dafe1f-3aae-4d9f-8901-df77df17cf2e%26entityType%3Dcollection%26workspaceId%3D77be33e6-4bcf-4494-a300-c4a8816ee6d2)
+[<img src="https://run.pstmn.io/button.svg" alt="Run In Postman" style="width: 128px; height: 32px;">](https://god.gw.postman.com/run-collection/2057404-408fd031-2a35-471a-8579-8ab97461013c?action=collection%2Ffork&source=rip_markdown&collection-url=entityId%3D2057404-408fd031-2a35-471a-8579-8ab97461013c%26entityType%3Dcollection%26workspaceId%3D81912c66-6451-4f2a-92fa-d1cd8c7dc65c)
 
 ## Technologies Used
 - **Backend**: Java, Spring Boot, Spring Data JPA
