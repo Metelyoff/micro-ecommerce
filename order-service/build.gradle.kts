@@ -21,16 +21,7 @@ configurations {
 
 repositories {
 	mavenCentral()
-	// TODO: uncomment for the docker compose deploying
-	maven {
-		url = uri(System.getenv("MAVEN_URL"))
-		credentials {
-			username = System.getenv("MAVEN_USERNAME")
-			password = System.getenv("MAVEN_TOKEN")
-		}
-	}
-	// TODO: For the development purpose (it is necessary to do publishToMavenLocal for the including dependency)
-	mavenLocal()
+	maven(url = "https://jitpack.io")
 }
 
 extra["springCloudVersion"] = "2024.0.0"
@@ -41,7 +32,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 
-	implementation("com.ecommerce.outbox:outbox:1.0.0")
+	implementation("com.github.Metelyoff:outbox:1.0.3")
 
 	compileOnly("org.projectlombok:lombok")
 	runtimeOnly("org.postgresql:postgresql")
