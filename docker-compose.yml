@@ -253,7 +253,7 @@ services:
       args:
         MAVEN_URL: https://maven.pkg.github.com/Metelyoff/maven-repository
         MAVEN_USERNAME: Metelyoff
-        MAVEN_TOKEN: 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
+        MAVEN_TOKEN: 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
     container_name: payment-service
     environment:
       DATABASE_URL: jdbc:postgresql://payment-service-db:5434/payment_service_db
@@ -286,7 +286,7 @@ services:
       args:
         MAVEN_URL: https://maven.pkg.github.com/Metelyoff/maven-repository
         MAVEN_USERNAME: Metelyoff
-        MAVEN_TOKEN: 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
+        MAVEN_TOKEN: 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
     container_name: inventory-service
     environment:
       DATABASE_URL: jdbc:postgresql://inventory-service-db:5435/inventory_service_db
@@ -318,7 +318,7 @@ services:
       args:
         MAVEN_URL: https://maven.pkg.github.com/Metelyoff/maven-repository
         MAVEN_USERNAME: Metelyoff
-        MAVEN_TOKEN: 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
+        MAVEN_TOKEN: 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
     container_name: order-service
     environment:
       DATABASE_URL: jdbc:postgresql://order-service-db:5433/order_service_db
