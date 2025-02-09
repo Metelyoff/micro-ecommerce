@@ -46,19 +46,7 @@ publishing {
             from(components["java"])
         }
     }
-    // TODO: for the local publishing
     repositories {
         mavenLocal()
-    }
-    // TODO: for the remote publishing
-    repositories {
-        maven {
-            name = "MavenPackages"
-            url = uri(System.getenv("MAVEN_URL"))
-            credentials {
-                username = System.getenv("MAVEN_USERNAME")
-                password = System.getenv("MAVEN_TOKEN")
-            }
-        }
     }
 }
