@@ -42,13 +42,13 @@ spring:
           value:
             default.type: com.ecommerce.outbox.events.OutboxEvent
 
-#management:
-#  endpoint:
-#    health:
-#      show-details: always
-#      cache:
-#        time-to-live: 0s
-#  endpoints:
-#    web:
-#      exposure:
-#        include: [ "info", "health", "metrics", "logfile", "loggers", "env" ]
+management:
+  endpoint:
+    health:
+      show-details: always
+      cache:
+        time-to-live: 0s
+  endpoints:
+    web:
+      exposure:
+        include: [ "info", "health", "metrics", "logfile", "loggers", "env" ]
