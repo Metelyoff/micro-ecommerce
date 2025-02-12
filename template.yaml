@@ -151,8 +151,8 @@ Resources:
       Path: "/"
       Roles:
         - !Ref ECSRole
-#    DependsOn:
-#      - ECSRole
+    DependsOn:
+      - ECSRole
 
   ECSRole:
     Type: AWS::IAM::Role
@@ -170,121 +170,115 @@ Resources:
         - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
         - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
 
-  ECSAutoScalingGroup:
-    Type: AWS::AutoScaling::AutoScalingGroup
-    Properties:
-      VPCZoneIdentifier:
-        - !Ref PrivateSubnet
-      LaunchTemplate:
-        LaunchTemplateId: !Ref ECSLaunchTemplate
-        Version: !GetAtt ECSLaunchTemplate.LatestVersionNumber
-      MinSize: 1
-      MaxSize: 1
-      DesiredCapacity: 1
-      Tags:
-        - Key: Name
-          Value: !Sub "${Environment}-ecs-asg"
-          PropagateAtLaunch: true
+#  ECSAutoScalingGroup:
+#    Type: AWS::AutoScaling::AutoScalingGroup
+#    Properties:
+#      VPCZoneIdentifier:
+#        - !Ref PrivateSubnet
+#      LaunchTemplate:
+#        LaunchTemplateId: !Ref ECSLaunchTemplate
+#        Version: !GetAtt ECSLaunchTemplate.LatestVersionNumber
+#      MinSize: 1
+#      MaxSize: 1
+#      DesiredCapacity: 1
+#      Tags:
+#        - Key: Name
+#          Value: !Sub "${Environment}-ecs-asg"
+#          PropagateAtLaunch: true
 #    DependsOn:
 #      - ECSLaunchTemplate
 
-  ECSLaunchTemplate:
-    Type: AWS::EC2::LaunchTemplate
-    Properties:
-      LaunchTemplateName: !Sub "${Environment}-kafka-launch-template"
-      LaunchTemplateData:
-        InstanceType: t2.micro
-        ImageId: !Sub "{{resolve:ssm:/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id}}"
-#        ImageId: ami-0741902214f4a7204
-        NetworkInterfaces:
-          - AssociatePublicIpAddress: true
-            DeviceIndex: 0
-            SubnetId: !Ref PublicSubnet
-            Groups:
-              - !Ref KafkaSecurityGroup
-        IamInstanceProfile:
-          Name: !Ref ECSInstanceProfile
-        UserData:
-          Fn::Base64: !Sub |
-            #!/bin/bash -xe
-            echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
-            yum install -y aws-cfn-bootstrap
-            /opt/aws/bin/cfn-init -v --stack ${AWS::StackId} --resource ContainerInstances --configsets full_install --region ${AWS::Region} &
-        MetadataOptions:
-          HttpEndpoint: enabled
-          HttpTokens: required
+#  ECSLaunchTemplate:
+#    Type: AWS::EC2::LaunchTemplate
+#    Properties:
+#      LaunchTemplateName: !Sub "${Environment}-kafka-launch-template"
+#      LaunchTemplateData:
+#        InstanceType: t2.micro
+#        ImageId: !Sub "{{resolve:ssm:/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id}}"
+#        NetworkInterfaces:
+#          - AssociatePublicIpAddress: true
+#            DeviceIndex: 0
+#            SubnetId: !Ref PublicSubnet
+#            Groups:
+#              - !Ref KafkaSecurityGroup
+#        IamInstanceProfile:
+#          Name: !Ref ECSInstanceProfile
+#        UserData:
+#          Fn::Base64: !Sub |
+#            #!/bin/bash -xe
+#            echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
+#            yum install -y aws-cfn-bootstrap
+#            /opt/aws/bin/cfn-init -v --stack ${AWS::StackId} --resource ContainerInstances --configsets full_install --region ${AWS::Region} &
+#        MetadataOptions:
+#          HttpEndpoint: enabled
+#          HttpTokens: required
 #    DependsOn:
 #      - PublicSubnet
 #      - KafkaSecurityGroup
 #      - ECSInstanceProfile
 
-  ECSCluster:
-    Type: AWS::ECS::Cluster
-    Properties:
-      ClusterName: !Sub "${Environment}-kafka-cluster"
+#  ECSCluster:
+#    Type: AWS::ECS::Cluster
+#    Properties:
+#      ClusterName: !Sub "${Environment}-kafka-cluster"
 
-  KafkaTaskDefinition:
-    Type: AWS::ECS::TaskDefinition
-    Properties:
-      Family: !Sub "${Environment}-kafka"
-#      NetworkMode: awsvpc
-      NetworkMode: bridge
-      RequiresCompatibilities:
-        - EC2
-      Cpu: "512"
-      Memory: "512"
-      ContainerDefinitions:
-        - Name: kafka
-#          Image: 195275653332.dkr.ecr.eu-central-1.amazonaws.com/micro-ecommerce-kafka
-          Image: apache/kafka:latest
-          Essential: true
-#          Cpu: 512
-#          Memory: 512
-          PortMappings:
-            - ContainerPort: 29092
-              HostPort: 29092
-            - ContainerPort: 29093
-              HostPort: 29093
-          Environment:
-            - Name: KAFKA_BROKER_ID
-              Value: "1"
-            - Name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
-              Value: "INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT"
-            - Name: KAFKA_ADVERTISED_LISTENERS
-#              Value: !Sub "INTERNAL://${KafkaCLB.DNSName}:29092"
-              Value: !Sub "INTERNAL://ip-10-0-2-48.eu-central-1.compute.internal:29092"
-            - Name: KAFKA_CONTROLLER_QUORUM_VOTERS
-              Value: "1@ip-10-0-2-48.eu-central-1.compute.internal.eu-central-1.elb.amazonaws.com:29093"
-            - Name: KAFKA_LISTENERS
-              Value: "INTERNAL://:29092,CONTROLLER://:29093"
-            - Name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
-              Value: "1"
-            - Name: KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS
-              Value: "0"
-            - Name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
-              Value: "1"
-            - Name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
-              Value: "1"
-            - Name: KAFKA_PROCESS_ROLES
-              Value: "broker,controller"
-            - Name: KAFKA_NODE_ID
-              Value: "1"
-            - Name: KAFKA_INTER_BROKER_LISTENER_NAME
-              Value: "INTERNAL"
-            - Name: KAFKA_CONTROLLER_LISTENER_NAMES
-              Value: "CONTROLLER"
-            - Name: CLUSTER_ID
-              Value: "ecommerce"
-            - Name: INITIAL_BROKER_REGISTRATION_TIMEOUT_MS
-              Value: "240000"
-            - Name: KAFKA_HEAP_OPTS
-              Value: "-Xms512m -Xmx512m"
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Ref KafkaLogGroup
-              awslogs-region: !Ref "AWS::Region"
-              awslogs-stream-prefix: kafka
+#  KafkaTaskDefinition:
+#    Type: AWS::ECS::TaskDefinition
+#    Properties:
+#      Family: !Sub "${Environment}-kafka"
+#      NetworkMode: bridge
+#      RequiresCompatibilities:
+#        - EC2
+#      Cpu: "512"
+#      Memory: "512"
+#      ContainerDefinitions:
+#        - Name: kafka
+#          Image: apache/kafka:latest
+#          Essential: true
+#          PortMappings:
+#            - ContainerPort: 29092
+#              HostPort: 29092
+#            - ContainerPort: 29093
+#              HostPort: 29093
+#          Environment:
+#            - Name: KAFKA_BROKER_ID
+#              Value: "1"
+#            - Name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+#              Value: "INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT"
+#            - Name: KAFKA_ADVERTISED_LISTENERS
+#              Value: !Sub "INTERNAL://ip-10-0-2-48.eu-central-1.compute.internal:29092"
+#            - Name: KAFKA_CONTROLLER_QUORUM_VOTERS
+#              Value: "1@ip-10-0-2-48.eu-central-1.compute.internal.eu-central-1.elb.amazonaws.com:29093"
+#            - Name: KAFKA_LISTENERS
+#              Value: "INTERNAL://:29092,CONTROLLER://:29093"
+#            - Name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+#              Value: "1"
+#            - Name: KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS
+#              Value: "0"
+#            - Name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
+#              Value: "1"
+#            - Name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
+#              Value: "1"
+#            - Name: KAFKA_PROCESS_ROLES
+#              Value: "broker,controller"
+#            - Name: KAFKA_NODE_ID
+#              Value: "1"
+#            - Name: KAFKA_INTER_BROKER_LISTENER_NAME
+#              Value: "INTERNAL"
+#            - Name: KAFKA_CONTROLLER_LISTENER_NAMES
+#              Value: "CONTROLLER"
+#            - Name: CLUSTER_ID
+#              Value: "ecommerce"
+#            - Name: INITIAL_BROKER_REGISTRATION_TIMEOUT_MS
+#              Value: "240000"
+#            - Name: KAFKA_HEAP_OPTS
+#              Value: "-Xms512m -Xmx512m"
+#          LogConfiguration:
+#            LogDriver: awslogs
+#            Options:
+#              awslogs-group: !Ref KafkaLogGroup
+#              awslogs-region: !Ref "AWS::Region"
+#              awslogs-stream-prefix: kafka
 #          HealthCheck:
 #            Command: [ "CMD-SHELL", "nc -z localhost 9092" ]
 #            Interval: 30
@@ -295,33 +289,77 @@ Resources:
 #      - ECSAutoScalingGroup
 #      - KafkaLogGroup
 
+  KafkaEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: !Sub "{{resolve:ssm:/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id}}"
+      SecurityGroupIds:
+        - !Ref KafkaSecurityGroup
+      SubnetId: !Ref PrivateSubnet
+      IamInstanceProfile: !Ref ECSInstanceProfile
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          INSTANCE_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
+          echo "INSTANCE_IP=$INSTANCE_IP"
+          yum update -y
+          yum install -y docker
+          service docker start
+          usermod -a -G docker ec2-user
+          
+          export LOG_GROUP_NAME=${KafkaLogGroup}
+          echo "[kafka] logging configuration to CloudWatch"
+          echo "awslogs-group=${KafkaLogGroup}" > /etc/awslogs/awslogs.conf
+          echo "awslogs-stream=kafka-log-stream" >> /etc/awslogs/awslogs.conf
+          echo "awslogs-region=${AWS::Region}" >> /etc/awslogs/awslogs.conf
+          service awslogs start
+          
+          docker pull apache/kafka:latest
+          export KAFKA_BROKER_ID=1
+          export KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+          export KAFKA_ADVERTISED_LISTENERS=INTERNAL://$INSTANCE_IP:29092
+          export KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+          export KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
+          export KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
+          export KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
+          export KAFKA_PROCESS_ROLES=broker,controller
+          export KAFKA_NODE_ID=1
+          export KAFKA_CONTROLLER_QUORUM_VOTERS=1@$INSTANCE_IP:29093
+          export KAFKA_LISTENERS=INTERNAL://:29092,CONTROLLER://:29093
+          export KAFKA_INTER_BROKER_LISTENER_NAME=INTERNAL
+          export KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
+          export KAFKA_HEAP_OPTS="-Xms512m -Xmx512m"
+          export CLUSTER_ID=ecommerce
+          docker run -d --name kafka -p 29092:29092 -p 29093:29093 apache/kafka:latest
+
   KafkaLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub "${Environment}-kafka-logs"
-      RetentionInDays: 7
+      RetentionInDays: 1
       Tags:
         - Key: Name
           Value: kafka-logs
 
-  KafkaCLB:
-    Type: AWS::ElasticLoadBalancing::LoadBalancer
-    Properties:
-      LoadBalancerName: !Sub "${Environment}-kafka-clb"
-      Scheme: internal
-      Subnets:
-        - !Ref PrivateSubnet
-      SecurityGroups:
-        - !Ref KafkaSecurityGroup
-      Listeners:
-        - Protocol: TCP
-          LoadBalancerPort: 29092
-          InstanceProtocol: TCP
-          InstancePort: 29092
-        - Protocol: TCP
-          LoadBalancerPort: 29093
-          InstanceProtocol: TCP
-          InstancePort: 29093
+#  KafkaCLB:
+#    Type: AWS::ElasticLoadBalancing::LoadBalancer
+#    Properties:
+#      LoadBalancerName: !Sub "${Environment}-kafka-clb"
+#      Scheme: internal
+#      Subnets:
+#        - !Ref PrivateSubnet
+#      SecurityGroups:
+#        - !Ref KafkaSecurityGroup
+#      Listeners:
+#        - Protocol: TCP
+#          LoadBalancerPort: 29092
+#          InstanceProtocol: TCP
+#          InstancePort: 29092
+#        - Protocol: TCP
+#          LoadBalancerPort: 29093
+#          InstanceProtocol: TCP
+#          InstancePort: 29093
 #      HealthCheck:
 #        Target: TCP:9092
 #        Interval: 30
@@ -329,53 +367,43 @@ Resources:
 #        HealthyThreshold: 3
 #        UnhealthyThreshold: 2
 
-  KafkaService:
-    Type: AWS::ECS::Service
-    Properties:
-      Cluster: !Ref ECSCluster
-      ServiceName: !Sub "${Environment}-kafka-service"
-      DesiredCount: 1
-      LaunchType: EC2
-      TaskDefinition: !Ref KafkaTaskDefinition
-      LoadBalancers:
+#  KafkaService:
+#    Type: AWS::ECS::Service
+#    Properties:
+#      Cluster: !Ref ECSCluster
+#      ServiceName: !Sub "${Environment}-kafka-service"
+#      DesiredCount: 1
+#      LaunchType: EC2
+#      TaskDefinition: !Ref KafkaTaskDefinition
+#      LoadBalancers:
 #        - LoadBalancerName: !Ref KafkaCLB
 #          ContainerName: kafka
-#          ContainerPort: 29092
-        - LoadBalancerName: !Ref KafkaCLB
-          ContainerName: kafka
-          ContainerPort: 29093
-#      NetworkConfiguration:
-#        AwsvpcConfiguration:
-#          AssignPublicIp: DISABLED
-#          SecurityGroups:
-#            - !Ref KafkaSecurityGroup
-#          Subnets:
-#            - !Ref PrivateSubnet
+#          ContainerPort: 29093
 #    DependsOn:
 #      - ECSRole
 #      - ECSCluster
 #      - KafkaTaskDefinition
 #      - ECSAutoScalingGroup
 
-  ECSTaskExecutionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - ecs-tasks.amazonaws.com
-            Action:
-              - sts:AssumeRole
-            Condition:
-              ArnLike:
-                aws:SourceArn: !Sub arn:${AWS::Partition}:ecs:${AWS::Region}:${AWS::AccountId}:*
-              StringEquals:
-                aws:SourceAccount: !Sub ${AWS::AccountId}
-      Path: /
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+#  ECSTaskExecutionRole:
+#    Type: AWS::IAM::Role
+#    Properties:
+#      AssumeRolePolicyDocument:
+#        Statement:
+#          - Effect: Allow
+#            Principal:
+#              Service:
+#                - ecs-tasks.amazonaws.com
+#            Action:
+#              - sts:AssumeRole
+#            Condition:
+#              ArnLike:
+#                aws:SourceArn: !Sub arn:${AWS::Partition}:ecs:${AWS::Region}:${AWS::AccountId}:*
+#              StringEquals:
+#                aws:SourceAccount: !Sub ${AWS::AccountId}
+#      Path: /
+#      ManagedPolicyArns:
+#        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 
 #  PostgreSQLSecurityGroup:
 #    Type: AWS::EC2::SecurityGroup
@@ -395,12 +423,6 @@ Resources:
 
 Outputs:
 
-  KafkaClusterName:
-    Description: Kafka ECS Cluster Name
-    Value: !Ref ECSCluster
-
-  KafkaServiceName:
-    Description: Kafka ECS Service Name
-    Value: !Ref KafkaService
-
-# Caused by: org.apache.kafka.common.KafkaException: Socket server failed to bind to internal-dev-kafka-clb-1443648838.eu-central-1.elb.amazonaws.com:29093: Address not available.
+  KafkaInstanceOutput:
+    Description: EC2 Instance ID of the Kafka broker node
+    Value: !Ref KafkaEC2Instance
