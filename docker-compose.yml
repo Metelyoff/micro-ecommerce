@@ -45,96 +45,89 @@ services:
 #    restart: no
 
   order-service-db:
-    image: postgres:15
+    build:
+      context: ./order-service-db
+      args:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_DB: order_service_db
     container_name: order-service-db
     ports:
-      - "5433:5433"
+      - "5433:5432"
     networks:
       - orders
       - orders_db
       - debezium
     volumes:
       - order_service_data:/var/lib/postgresql/data
-      - ./order-service/init-db/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./order-service/postgresql.conf:/etc/postgresql/postgresql.conf
-    command: postgres -c config_file=/etc/postgresql/postgresql.conf -p 5433
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: order_service_db
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -h order-service-db -p 5433" ]
-      interval: 3s
-      retries: 3
-      start_period: 2s
-      timeout: 2s
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
   payment-service-db:
-    image: postgres:15
+    build:
+      context: ./payment-service-db
+      args:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_DB: payment_service_db
     container_name: payment-service-db
     ports:
-      - "5434:5434"
+      - "5434:5432"
     networks:
       - payment
       - payment_db
       - debezium
     volumes:
       - payment_service_data:/var/lib/postgresql/data
-      - ./payment-service/init-db/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./payment-service/postgresql.conf:/etc/postgresql/postgresql.conf
-    command: postgres -c config_file=/etc/postgresql/postgresql.conf -p 5434
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: payment_service_db
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -h payment-service-db -p 5434" ]
-      interval: 3s
-      retries: 3
-      start_period: 2s
-      timeout: 2s
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
   inventory-service-db:
-    image: postgres:15
+    build:
+      context: ./inventory-service-db
+      args:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_DB: inventory_service_db
     container_name: inventory-service-db
     ports:
-      - "5435:5435"
+      - "5435:5432"
     networks:
       - inventory
       - inventory_db
       - debezium
     volumes:
       - inventory_service_data:/var/lib/postgresql/data
-      - ./inventory-service/init-db/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./inventory-service/postgresql.conf:/etc/postgresql/postgresql.conf
-    command: postgres -c config_file=/etc/postgresql/postgresql.conf -p 5435
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: inventory_service_db
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -h inventory-service-db -p 5435" ]
-      interval: 3s
-      retries: 3
-      start_period: 2s
-      timeout: 2s
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
   kafka:
     image: apache/kafka:latest
     hostname: kafka
     container_name: kafka
-    ports:
-      - "9092:9092"
     networks:
       - kafka
       - debezium
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
@@ -142,11 +135,17 @@ services:
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_NODE_ID: 1
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:9092
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LISTENERS: INTERNAL://:29092,CONTROLLER://:29093
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_HEAP_OPTS: "-Xms512m -Xmx512m"
       CLUSTER_ID: ecommerce
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
   kafka-ui:
     image: provectuslabs/kafka-ui
@@ -163,6 +162,11 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
     depends_on:
       - kafka
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
   debezium:
     image: debezium/connect:2.3
@@ -197,6 +201,11 @@ services:
       - payment-service-db
       - inventory-service-db
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
   debezium-ui:
     image: debezium/debezium-ui
@@ -210,6 +219,11 @@ services:
       - KAFKA_CONNECT_URIS=http://debezium:8083
     depends_on:
       - debezium
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
   debezium-connector:
     image: curlimages/curl:7.87.0
@@ -238,13 +252,18 @@ services:
       start_period: 5s
       timeout: 15s
     restart: no
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
   payment-service:
     build:
       context: ./payment-service
     container_name: payment-service
     environment:
-      DATABASE_URL: jdbc:postgresql://payment-service-db:5434/payment_service_db
+      DATABASE_URL: jdbc:postgresql://payment-service-db:5432/payment_service_db
       DATABASE_USERNAME: postgres
       DATABASE_PASSWORD: postgres
       KAFKA_URI: kafka:29092
@@ -267,13 +286,18 @@ services:
       - debezium
       - payment-service-db
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
   inventory-service:
     build:
       context: ./inventory-service
     container_name: inventory-service
     environment:
-      DATABASE_URL: jdbc:postgresql://inventory-service-db:5435/inventory_service_db
+      DATABASE_URL: jdbc:postgresql://inventory-service-db:5432/inventory_service_db
       DATABASE_USERNAME: postgres
       DATABASE_PASSWORD: postgres
       KAFKA_URI: kafka:29092
@@ -295,13 +319,18 @@ services:
       - debezium
       - inventory-service-db
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
   order-service:
     build:
       context: ./order-service
     container_name: order-service
     environment:
-      DATABASE_URL: jdbc:postgresql://order-service-db:5433/order_service_db
+      DATABASE_URL: jdbc:postgresql://order-service-db:5432/order_service_db
       DATABASE_USERNAME: postgres
       DATABASE_PASSWORD: postgres
       KAFKA_URI: kafka:29092
@@ -323,6 +352,11 @@ services:
       - debezium
       - order-service-db
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
   web:
     build:
@@ -353,3 +387,8 @@ services:
       - payment-service
       - inventory-service
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
