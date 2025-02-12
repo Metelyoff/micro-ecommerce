@@ -252,9 +252,9 @@ Resources:
               Value: "INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT"
             - Name: KAFKA_ADVERTISED_LISTENERS
 #              Value: !Sub "INTERNAL://${KafkaCLB.DNSName}:29092"
-              Value: !Sub "INTERNAL://ip-10-0-2-163.eu-central-1.compute.internal:29092"
+              Value: !Sub "INTERNAL://ip-10-0-2-48.eu-central-1.compute.internal:29092"
             - Name: KAFKA_CONTROLLER_QUORUM_VOTERS
-              Value: "1@internal-dev-kafka-clb-1581596733.eu-central-1.elb.amazonaws.com:29093"
+              Value: "1@ip-10-0-2-48.eu-central-1.compute.internal.eu-central-1.elb.amazonaws.com:29093"
             - Name: KAFKA_LISTENERS
               Value: "INTERNAL://:29092,CONTROLLER://:29093"
             - Name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
