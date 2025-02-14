@@ -4,6 +4,7 @@ import { faTrash, faPlus, faMinus, faCreditCard, faMoneyBillWave } from '@fortaw
 import { Tooltip, OverlayTrigger, Spinner } from 'react-bootstrap';
 import PaymentModal from './PaymentModal';
 import './PaymentModal.css';
+import Config from './../config';
 
 const Cart = ({ cart, products, updateQuantity, removeFromCart, confirmOrder, orderStatuses, setOrderStatuses, selectedPaymentMethod, setSelectedPaymentMethod, createNewOrder, paymentAmount, paymentExpiry, disableAddToCart, isRefreshed, setIsRefreshed }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -112,7 +113,7 @@ const Cart = ({ cart, products, updateQuantity, removeFromCart, confirmOrder, or
     setShowPaymentModal(false);
     setShowLoader(true);
 
-    fetch(`${process.env.REACT_APP_PAYMENTS_API_URL}/payments/${currentOrder.paymentId}/pay`, {
+    fetch(`${Config.REACT_APP_PAYMENTS_API_URL}/payments/${currentOrder.paymentId}/pay`, {
       method: 'POST'
     })
       .then(response => response.json())

@@ -1,12 +1,31 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Kafka deployment to AWS ECS using EC2 instances for Free Tier.
+Description: >
+  This CloudFormation template sets up a network infrastructure including a VPC, public and private subnets, 
+  Internet Gateway, NAT Gateway, and route tables. It also provisions IAM roles and an instance profile 
+  for EC2 resources. The template supports deployment environments (dev, staging, production) 
+  and allows basic configuration through parameters for enhanced flexibility.
 
 Parameters:
+
+  AccessKey:
+    Type: String
+    Description: AWS access key
+
   Environment:
     Type: String
     Default: dev
     AllowedValues: [dev, staging, production]
     Description: Deployment environment
+
+  DBUsername:
+    Type: String
+    Default: postgres
+    Description: Database username
+
+  DBPassword:
+    Type: String
+    Default: postgres
+    Description: Database password
 
 Resources:
 
@@ -55,6 +74,8 @@ Resources:
     Properties:
       VpcId: !Ref VPC
       InternetGatewayId: !Ref InternetGateway
+    DependsOn:
+      - InternetGateway
 
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
@@ -63,8 +84,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${Environment}-public-route-table"
-#    DependsOn:
-#      - InternetGateway
+    DependsOn:
+      - InternetGateway
 
   PublicRoute:
     Type: AWS::EC2::Route
@@ -87,9 +108,9 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${Environment}-nat-gateway"
-#    DependsOn:
-#      - PublicSubnet
-#      - PublicElasticIP
+    DependsOn:
+      - PublicSubnet
+      - PublicElasticIP
 
   PublicElasticIP:
     Type: AWS::EC2::EIP
@@ -103,8 +124,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${Environment}-private-route-table"
-#    DependsOn:
-#      - NATGateway
+    DependsOn:
+      - NATGateway
 
   PrivateRoute:
     Type: AWS::EC2::Route
@@ -119,42 +140,7 @@ Resources:
       SubnetId: !Ref PrivateSubnet
       RouteTableId: !Ref PrivateRouteTable
 
-  KafkaSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Enable access to Kafka brokers
-      VpcId: !Ref VPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 29093
-          ToPort: 29093
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 29092
-          ToPort: 29092
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: 0.0.0.0/0
-      SecurityGroupEgress:
-        - IpProtocol: "-1"
-          FromPort: -1
-          ToPort: -1
-          CidrIp: 0.0.0.0/0
-#    DependsOn:
-#      - VPC
-
-  ECSInstanceProfile:
-    Type: AWS::IAM::InstanceProfile
-    Properties:
-      Path: "/"
-      Roles:
-        - !Ref ECSRole
-    DependsOn:
-      - ECSRole
-
-  ECSRole:
+  InstanceRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -169,6 +155,15 @@ Resources:
         - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
         - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
         - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: "/"
+      Roles:
+        - !Ref InstanceRole
+    DependsOn:
+      - InstanceRole
 
 #  ECSAutoScalingGroup:
 #    Type: AWS::AutoScaling::AutoScalingGroup
@@ -202,7 +197,7 @@ Resources:
 #            Groups:
 #              - !Ref KafkaSecurityGroup
 #        IamInstanceProfile:
-#          Name: !Ref ECSInstanceProfile
+#          Name: !Ref InstanceProfile
 #        UserData:
 #          Fn::Base64: !Sub |
 #            #!/bin/bash -xe
@@ -215,7 +210,7 @@ Resources:
 #    DependsOn:
 #      - PublicSubnet
 #      - KafkaSecurityGroup
-#      - ECSInstanceProfile
+#      - InstanceProfile
 
 #  ECSCluster:
 #    Type: AWS::ECS::Cluster
@@ -289,58 +284,14 @@ Resources:
 #      - ECSAutoScalingGroup
 #      - KafkaLogGroup
 
-  KafkaEC2Instance:
-    Type: AWS::EC2::Instance
-    Properties:
-      InstanceType: t2.micro
-      ImageId: !Sub "{{resolve:ssm:/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id}}"
-      SecurityGroupIds:
-        - !Ref KafkaSecurityGroup
-      SubnetId: !Ref PrivateSubnet
-      IamInstanceProfile: !Ref ECSInstanceProfile
-      UserData:
-        Fn::Base64: !Sub |
-          #!/bin/bash
-          INSTANCE_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
-          echo "INSTANCE_IP=$INSTANCE_IP"
-          yum update -y
-          yum install -y docker
-          service docker start
-          usermod -a -G docker ec2-user
-          
-          export LOG_GROUP_NAME=${KafkaLogGroup}
-          echo "[kafka] logging configuration to CloudWatch"
-          echo "awslogs-group=${KafkaLogGroup}" > /etc/awslogs/awslogs.conf
-          echo "awslogs-stream=kafka-log-stream" >> /etc/awslogs/awslogs.conf
-          echo "awslogs-region=${AWS::Region}" >> /etc/awslogs/awslogs.conf
-          service awslogs start
-          
-          docker pull apache/kafka:latest
-          export KAFKA_BROKER_ID=1
-          export KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
-          export KAFKA_ADVERTISED_LISTENERS=INTERNAL://$INSTANCE_IP:29092
-          export KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
-          export KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
-          export KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
-          export KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
-          export KAFKA_PROCESS_ROLES=broker,controller
-          export KAFKA_NODE_ID=1
-          export KAFKA_CONTROLLER_QUORUM_VOTERS=1@$INSTANCE_IP:29093
-          export KAFKA_LISTENERS=INTERNAL://:29092,CONTROLLER://:29093
-          export KAFKA_INTER_BROKER_LISTENER_NAME=INTERNAL
-          export KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
-          export KAFKA_HEAP_OPTS="-Xms512m -Xmx512m"
-          export CLUSTER_ID=ecommerce
-          docker run -d --name kafka -p 29092:29092 -p 29093:29093 apache/kafka:latest
-
-  KafkaLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub "${Environment}-kafka-logs"
-      RetentionInDays: 1
-      Tags:
-        - Key: Name
-          Value: kafka-logs
+#  KafkaLogGroup:
+#    Type: AWS::Logs::LogGroup
+#    Properties:
+#      LogGroupName: !Sub "${Environment}-kafka-logs"
+#      RetentionInDays: 1
+#      Tags:
+#        - Key: Name
+#          Value: kafka-logs
 
 #  KafkaCLB:
 #    Type: AWS::ElasticLoadBalancing::LoadBalancer
@@ -380,7 +331,7 @@ Resources:
 #          ContainerName: kafka
 #          ContainerPort: 29093
 #    DependsOn:
-#      - ECSRole
+#      - InstanceRole
 #      - ECSCluster
 #      - KafkaTaskDefinition
 #      - ECSAutoScalingGroup
@@ -405,24 +356,912 @@ Resources:
 #      ManagedPolicyArns:
 #        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 
-#  PostgreSQLSecurityGroup:
-#    Type: AWS::EC2::SecurityGroup
-#    Properties:
-#      GroupDescription: Enable access to PostgreSQL database
-#      VpcId: !Ref VPC
-#      SecurityGroupIngress:
-#        - IpProtocol: tcp
-#          FromPort: 5432
-#          ToPort: 5432
-#          CidrIp: 0.0.0.0/0
-#      SecurityGroupEgress:
-#        - IpProtocol: "-1"
-#          FromPort: -1
-#          ToPort: -1
-#          CidrIp: 0.0.0.0/0
+  # Kafka configurations
+  KafkaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable access to Kafka brokers
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 29093
+          ToPort: 29093
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 29092
+          ToPort: 29092
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+    DependsOn:
+      - VPC
+
+  KafkaEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: !Sub "{{resolve:ssm:/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id}}"
+      SecurityGroupIds:
+        - !Ref KafkaSecurityGroup
+      SubnetId: !Ref PrivateSubnet
+      IamInstanceProfile: !Ref InstanceProfile
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-kafka-instance"
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          INSTANCE_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
+          echo "INSTANCE_IP=$INSTANCE_IP"
+          yum update -y
+          yum install -y docker
+          service docker start
+          usermod -a -G docker ec2-user
+          
+          docker pull apache/kafka:latest
+          sudo docker run -d \
+          --restart always \
+          --name kafka \
+          -p 29092:29092 \
+          -p 29093:29093 \
+          -e KAFKA_BROKER_ID=1 \
+          -e KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT \
+          -e KAFKA_ADVERTISED_LISTENERS=INTERNAL://$INSTANCE_IP:29092 \
+          -e KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1 \
+          -e KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0 \
+          -e KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1 \
+          -e KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1 \
+          -e KAFKA_PROCESS_ROLES=broker,controller \
+          -e KAFKA_NODE_ID=1 \
+          -e KAFKA_CONTROLLER_QUORUM_VOTERS=1@$INSTANCE_IP:29093 \
+          -e KAFKA_LISTENERS=INTERNAL://:29092,CONTROLLER://:29093 \
+          -e KAFKA_INTER_BROKER_LISTENER_NAME=INTERNAL \
+          -e KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER \
+          -e KAFKA_HEAP_OPTS="-Xms512m -Xmx512m" \
+          -e CLUSTER_ID=ecommerce \
+          apache/kafka:latest
+    DependsOn:
+      - KafkaSecurityGroup
+      - InstanceProfile
+
+  KafkaUISecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable access to Kafka UI
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 29092
+          ToPort: 29092
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+    DependsOn:
+      - VPC
+
+  KafkaUIEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: !Sub "{{resolve:ssm:/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id}}"
+      SecurityGroupIds:
+        - !Ref KafkaUISecurityGroup
+      SubnetId: !Ref PublicSubnet
+      IamInstanceProfile: !Ref InstanceProfile
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-kafka-ui-instance"
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y docker
+          service docker start
+          usermod -a -G docker ec2-user
+          echo "KafkaEC2Instance=${KafkaEC2Instance.PrivateDnsName}"
+          docker pull provectuslabs/kafka-ui
+          docker run -d \
+          --restart always \
+          --name debezium \
+          -p 80:8080 \
+          -e KAFKA_CLUSTERS_0_NAME=ecommerce \
+          -e DYNAMIC_CONFIG_ENABLED=true \
+          -e KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=${KafkaEC2Instance.PrivateDnsName}:29092 \
+          -e SPRING_PROFILES_ACTIVE=prod \
+          provectuslabs/kafka-ui
+    DependsOn:
+      - KafkaEC2Instance
+      - KafkaUISecurityGroup
+      - PublicSubnet
+      - InstanceProfile
+
+  # Postgresql configurations
+  PostgreSQLSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable access to PostgreSQL database
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+    DependsOn:
+      - VPC
+
+  InventoryPostgresEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: !Sub "{{resolve:ssm:/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id}}"
+      SecurityGroupIds:
+        - !Ref PostgreSQLSecurityGroup
+      SubnetId: !Ref PrivateSubnet
+      IamInstanceProfile: !Ref InstanceProfile
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-inventory-db-instance"
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          echo "Start user data"
+          
+          yum update -y
+          yum install -y docker
+          service docker start
+                    
+          usermod -a -G docker ec2-user
+          docker login --username AWS --password ${AccessKey} ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com
+          
+          docker pull ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/micro-ecommerce-inventory-service-db:latest
+          echo "Pulled image"
+          docker run -d \
+          --restart always \
+          --name micro-ecommerce-inventory-service-db \
+          -p 5432:5432 \
+          -e POSTGRES_USER=${DBUsername} \
+          -e POSTGRES_PASSWORD=${DBPassword} \
+          -e POSTGRES_DB=inventory_service_db \
+          ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/micro-ecommerce-inventory-service-db:latest
+    DependsOn:
+      - PostgreSQLSecurityGroup
+      - PrivateSubnet
+      - InstanceProfile
+
+  OrderPostgresEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: !Sub "{{resolve:ssm:/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id}}"
+      SecurityGroupIds:
+        - !Ref PostgreSQLSecurityGroup
+      SubnetId: !Ref PrivateSubnet
+      IamInstanceProfile: !Ref InstanceProfile
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-order-db-instance"
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          echo "Start user data"
+          
+          yum update -y
+          yum install -y docker
+          service docker start
+          
+          usermod -a -G docker ec2-user
+          docker login --username AWS --password ${AccessKey} ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com
+          
+          docker pull ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/micro-ecommerce-order-service-db:latest
+          echo "Pulled image"
+          docker run -d \
+          --restart always \
+          --name micro-ecommerce-order-service-db \
+          -p 5432:5432 \
+          -e POSTGRES_USER=${DBUsername} \
+          -e POSTGRES_PASSWORD=${DBPassword} \
+          -e POSTGRES_DB=order_service_db \
+          ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/micro-ecommerce-order-service-db:latest
+    DependsOn:
+      - PostgreSQLSecurityGroup
+      - PrivateSubnet
+      - InstanceProfile
+
+  PaymentPostgresEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: !Sub "{{resolve:ssm:/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id}}"
+      SecurityGroupIds:
+        - !Ref PostgreSQLSecurityGroup
+      SubnetId: !Ref PrivateSubnet
+      IamInstanceProfile: !Ref InstanceProfile
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-payment-db-instance"
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          echo "Start user data"
+          
+          yum update -y
+          yum install -y docker
+          service docker start
+          
+          usermod -a -G docker ec2-user
+          docker login --username AWS --password ${AccessKey} ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com
+          
+          docker pull ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/micro-ecommerce-payment-service-db:latest
+          echo "Pulled image"
+          docker run -d \
+          --restart always \
+          --name micro-ecommerce-payment-service-db \
+          -p 5432:5432 \
+          -e POSTGRES_USER=${DBUsername} \
+          -e POSTGRES_PASSWORD=${DBPassword} \
+          -e POSTGRES_DB=payment_service_db \
+          ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/micro-ecommerce-payment-service-db:latest
+    DependsOn:
+      - PostgreSQLSecurityGroup
+      - PrivateSubnet
+      - InstanceProfile
+
+  # Debezium configurations
+  DebeziumSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable access to Debezium
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 29092
+          ToPort: 29092
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+    DependsOn:
+      - VPC
+
+  DebeziumEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: !Sub "{{resolve:ssm:/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id}}"
+      SecurityGroupIds:
+        - !Ref DebeziumSecurityGroup
+      SubnetId: !Ref PrivateSubnet
+      IamInstanceProfile: !Ref InstanceProfile
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-debezium-instance"
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y docker
+          
+          service docker start
+          usermod -a -G docker ec2-user
+          echo "PrivateDnsName=${KafkaEC2Instance.PrivateDnsName}"
+          
+          docker pull debezium/connect:2.3
+          docker run -d \
+          --name debezium \
+          -p 80:8083 \
+          -e BOOTSTRAP_SERVERS=${KafkaEC2Instance.PrivateDnsName}:29092 \
+          -e GROUP_ID=1 \
+          -e CONFIG_STORAGE_TOPIC=debezium_config \
+          -e OFFSET_STORAGE_TOPIC=debezium_offsets \
+          -e STATUS_STORAGE_TOPIC=debezium_status \
+          -e KEY_CONVERTER_SCHEMAS_ENABLE=false \
+          -e VALUE_CONVERTER_SCHEMAS_ENABLE=false \
+          -e CONNECT_KEY_CONVERTER=org.apache.kafka.connect.json.JsonConverter \
+          -e CONNECT_VALUE_CONVERTER=org.apache.kafka.connect.json.JsonConverter \
+          --restart always \
+          --health-cmd="curl -f http://localhost:8083/" \
+          --health-interval=10s \
+          --health-timeout=5s \
+          --health-retries=3 \
+          debezium/connect:2.3
+          
+          echo "Waiting for Debezium container to become healthy..."
+          while :
+            do
+            HEALTH_STATUS=$(docker inspect --format='{{json .State.Health.Status}}' debezium 2>/dev/null | tr -d '"')
+            if [[ "$HEALTH_STATUS" == "healthy" ]]; then
+              echo "Debezium container is healthy. Initialize DB connectors..."
+              echo "Initialize inventory connector"
+              curl -X POST -H 'Content-Type: application/json' --data '{
+                "name": "inventory-service-connector",
+                "config": {
+                  "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+                  "tasks.max": "1",
+                  "database.hostname": "${InventoryPostgresEC2Instance.PrivateDnsName}",
+                  "database.port": "5432",
+                  "database.user": "${DBUsername}",
+                  "database.password": "${DBPassword}",
+                  "database.dbname": "inventory_service_db",
+                  "database.server.name": "inventory_service",
+                  "plugin.name": "pgoutput",
+                  "slot.name": "debezium_slot",
+                  "topic.prefix": "inventory-service",
+                  "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+                  "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+                  "value.converter.schemas.enable": "false",
+                  "decimal.handling.mode": "string",
+                  "include.transaction": true,
+                  "after.state.only": "true",
+                  "transforms": "unwrap",
+                  "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+                  "transforms.unwrap.drop.tombstones": "true",
+                  "table.include.list": "public.outbox_events"
+                }
+              }' http://localhost/connectors
+              
+              echo "Initialize payment connector"
+              curl -X POST -H 'Content-Type: application/json' --data '{
+                "name": "payment-service-connector",
+                "config": {
+                  "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+                  "tasks.max": "1",
+                  "database.hostname": "${PaymentPostgresEC2Instance.PrivateDnsName}",
+                  "database.port": "5432",
+                  "database.user": "${DBUsername}",
+                  "database.password": "${DBPassword}",
+                  "database.dbname": "payment_service_db",
+                  "database.server.name": "payment_service",
+                  "plugin.name": "pgoutput",
+                  "slot.name": "debezium_slot",
+                  "topic.prefix": "payment-service",
+                  "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+                  "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+                  "value.converter.schemas.enable": "false",
+                  "decimal.handling.mode": "string",
+                  "include.transaction": true,
+                  "after.state.only": "true",
+                  "transforms": "unwrap",
+                  "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+                  "transforms.unwrap.drop.tombstones": "true",
+                  "table.include.list": "public.outbox_events"
+                }
+              }' http://localhost/connectors
+              
+              echo "Initialize order connector"
+              curl -X POST -H 'Content-Type: application/json' --data '{
+                "name": "order-service-connector",
+                "config": {
+                  "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+                  "tasks.max": "1",
+                  "database.hostname": "${OrderPostgresEC2Instance.PrivateDnsName}",
+                  "database.port": "5432",
+                  "database.user": "${DBUsername}",
+                  "database.password": "${DBPassword}",
+                  "database.dbname": "order_service_db",
+                  "database.server.name": "order_service",
+                  "plugin.name": "pgoutput",
+                  "slot.name": "debezium_slot",
+                  "topic.prefix": "order-service",
+                  "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+                  "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+                  "value.converter.schemas.enable": "false",
+                  "decimal.handling.mode": "string",
+                  "include.transaction": true,
+                  "after.state.only": "true",
+                  "transforms": "unwrap",
+                  "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+                  "transforms.unwrap.drop.tombstones": "true",
+                  "table.include.list": "public.outbox_events"
+                }
+              }' http://localhost/connectors
+              echo "All connectors initialized"
+              break
+            elif [[ "$HEALTH_STATUS" == "unhealthy" ]]; then
+              echo "Debezium container is unhealthy. Exiting..."
+              exit 1
+            else
+              # Continue waiting
+              echo "Current health status: $HEALTH_STATUS"
+              sleep 5
+            fi
+          done
+    DependsOn:
+      - DebeziumSecurityGroup
+      - PrivateSubnet
+      - InstanceProfile
+      - OrderPostgresEC2Instance
+      - InventoryPostgresEC2Instance
+      - PaymentPostgresEC2Instance
+
+  DebeziumUISecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable access to Debezium UI
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+    DependsOn:
+      - VPC
+
+  DebeziumUIEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: !Sub "{{resolve:ssm:/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id}}"
+      SecurityGroupIds:
+        - !Ref DebeziumUISecurityGroup
+      SubnetId: !Ref PublicSubnet
+      IamInstanceProfile: !Ref InstanceProfile
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-debezium-ui-instance"
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y docker
+          service docker start
+          usermod -a -G docker ec2-user
+          echo "DebeziumEC2Instance=${DebeziumEC2Instance.PrivateDnsName}"
+          docker pull debezium/debezium-ui
+          docker run -d \
+          --restart always \
+          --name debezium \
+          -p 80:8080 \
+          -e KAFKA_CONNECT_URIS=http://${DebeziumEC2Instance.PrivateDnsName}:80 \
+          --health-cmd="curl -f http://localhost:8080/" \
+          --health-interval=5s \
+          --health-timeout=5s \
+          --health-retries=3 \
+          debezium/debezium-ui
+    DependsOn:
+      - DebeziumUISecurityGroup
+      - PublicSubnet
+      - InstanceProfile
+      - DebeziumEC2Instance
+
+  # Services configurations
+  OrderServiceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable access to Order service
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 29092
+          ToPort: 29092
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+    DependsOn:
+      - VPC
+
+  OrderServiceEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: !Sub "{{resolve:ssm:/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id}}"
+      SecurityGroupIds:
+        - !Ref OrderServiceSecurityGroup
+      SubnetId: !Ref PrivateSubnet
+      IamInstanceProfile: !Ref InstanceProfile
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-order-service-instance"
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          echo "Start user data"
+          
+          yum update -y
+          yum install -y docker
+          service docker start
+          
+          usermod -a -G docker ec2-user
+          docker login --username AWS --password ${AccessKey} ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com
+          
+          docker pull ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/micro-ecommerce-order-service:latest
+          echo "Image pulled"
+          
+          docker run -d \
+          --restart always \
+          --name micro-ecommerce-order-service \
+          -p 80:8080 \
+          -e DATABASE_URL=jdbc:postgresql://${OrderPostgresEC2Instance.PrivateDnsName}:5432/order_service_db \
+          -e DATABASE_USERNAME=${DBUsername} \
+          -e DATABASE_PASSWORD=${DBPassword} \
+          -e KAFKA_URI=${KafkaEC2Instance.PrivateDnsName}:29092 \
+          -e DEBEZIUM_DESTINATION=order-service.public.outbox_events \
+          -e OUTBOX_TOPICS=payment-service.public.outbox_events,inventory-service.public.outbox_events \
+          --health-cmd="curl -f http://localhost:8080/actuator/health" \
+          --health-interval=5s \
+          --health-timeout=5s \
+          --health-retries=3 \
+          ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/micro-ecommerce-order-service:latest
+    DependsOn:
+      - OrderServiceSecurityGroup
+      - PrivateSubnet
+      - InstanceProfile
+      - OrderPostgresEC2Instance
+      - KafkaEC2Instance
+      - DebeziumEC2Instance
+
+  PaymentServiceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable access to Payment service
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 29092
+          ToPort: 29092
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+    DependsOn:
+      - VPC
+
+  PaymentServiceEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: !Sub "{{resolve:ssm:/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id}}"
+      SecurityGroupIds:
+        - !Ref PaymentServiceSecurityGroup
+      SubnetId: !Ref PrivateSubnet
+      IamInstanceProfile: !Ref InstanceProfile
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-payment-service-instance"
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          echo "Start user data"
+          
+          yum update -y
+          yum install -y docker
+          service docker start
+          
+          usermod -a -G docker ec2-user
+          docker login --username AWS --password ${AccessKey} ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com
+          
+          docker pull ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/micro-ecommerce-payment-service:latest
+          echo "Image pulled"
+          
+          docker run -d \
+          --restart always \
+          --name micro-ecommerce-payment-service \
+          -p 80:8080 \
+          -e DATABASE_URL=jdbc:postgresql://${PaymentPostgresEC2Instance.PrivateDnsName}:5432/payment_service_db \
+          -e DATABASE_USERNAME=${DBUsername} \
+          -e DATABASE_PASSWORD=${DBPassword} \
+          -e KAFKA_URI=${KafkaEC2Instance.PrivateDnsName}:29092 \
+          -e DEBEZIUM_DESTINATION=payment-service.public.outbox_events \
+          -e OUTBOX_TOPICS=order-service.public.outbox_events,inventory-service.public.outbox_events \
+          -e EXPIRE_DELAY_MILLIS=60000 \
+          --health-cmd="curl -f http://localhost:8080/actuator/health" \
+          --health-interval=5s \
+          --health-timeout=5s \
+          --health-retries=3 \
+          ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/micro-ecommerce-payment-service:latest
+    DependsOn:
+      - PaymentServiceSecurityGroup
+      - PrivateSubnet
+      - InstanceProfile
+      - PaymentPostgresEC2Instance
+      - KafkaEC2Instance
+      - DebeziumEC2Instance
+
+  InventoryServiceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable access to Inventory service
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 29092
+          ToPort: 29092
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+    DependsOn:
+      - VPC
+
+  InventoryServiceEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: !Sub "{{resolve:ssm:/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id}}"
+      SecurityGroupIds:
+        - !Ref InventoryServiceSecurityGroup
+      SubnetId: !Ref PrivateSubnet
+      IamInstanceProfile: !Ref InstanceProfile
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-inventory-service-instance"
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          echo "Start user data"
+          
+          yum update -y
+          yum install -y docker
+          service docker start
+          
+          usermod -a -G docker ec2-user
+          docker login --username AWS --password ${AccessKey} ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com
+          
+          docker pull ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/micro-ecommerce-inventory-service:latest
+          echo "Image pulled"
+          
+          docker run -d \
+          --restart always \
+          --name micro-ecommerce-inventory-service \
+          -p 80:8080 \
+          -e DATABASE_URL=jdbc:postgresql://${InventoryPostgresEC2Instance.PrivateDnsName}:5432/inventory_service_db \
+          -e DATABASE_USERNAME=${DBUsername} \
+          -e DATABASE_PASSWORD=${DBPassword} \
+          -e KAFKA_URI=${KafkaEC2Instance.PrivateDnsName}:29092 \
+          -e DEBEZIUM_DESTINATION=inventory-service.public.outbox_events \
+          -e OUTBOX_TOPICS=payment-service.public.outbox_events,order-service.public.outbox_events \
+          --health-cmd="curl -f http://localhost:8080/actuator/health" \
+          --health-interval=5s \
+          --health-timeout=5s \
+          --health-retries=3 \
+          ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/micro-ecommerce-inventory-service:latest
+    DependsOn:
+      - InventoryServiceSecurityGroup
+      - PrivateSubnet
+      - InstanceProfile
+      - InventoryPostgresEC2Instance
+      - KafkaEC2Instance
+      - DebeziumEC2Instance
+
+  WebSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable access to Web UI
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+    DependsOn:
+      - VPC
+
+  WebEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: !Sub "{{resolve:ssm:/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id}}"
+      SecurityGroupIds:
+        - !Ref WebSecurityGroup
+      SubnetId: !Ref PublicSubnet
+      IamInstanceProfile: !Ref InstanceProfile
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-web-instance"
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          
+          yum update -y
+          yum install -y docker
+          service docker start
+          usermod -a -G docker ec2-user
+          
+          echo "InventoryServiceEC2Instance=${InventoryServiceEC2Instance.PrivateDnsName}"
+          echo "PaymentServiceEC2Instance=${PaymentServiceEC2Instance.PrivateDnsName}"
+          echo "OrderServiceEC2Instance=${OrderServiceEC2Instance.PrivateDnsName}"
+          
+          PUBLIC_DNS=$(curl -s http://169.254.169.254/latest/meta-data/public-hostname)
+          echo "PUBLIC_DNS $PUBLIC_DNS"
+          
+          docker login --username AWS --password ${AccessKey} ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com
+          
+          docker pull ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/micro-ecommerce-web
+          docker run -d \
+          --restart always \
+          --name micro-ecommerce-web \
+          -p 80:80 \
+          -e REACT_APP_PRODUCTS_API_URL=http://$PUBLIC_DNS/api \
+          -e REACT_APP_ORDERS_API_URL=http://$PUBLIC_DNS/api \
+          -e REACT_APP_PAYMENTS_API_URL=http://$PUBLIC_DNS/api \
+          -e BACKEND_PRODUCTS_API_URL=http://${InventoryServiceEC2Instance.PrivateDnsName} \
+          -e BACKEND_ORDERS_API_URL=http://${OrderServiceEC2Instance.PrivateDnsName} \
+          -e BACKEND_PAYMENTS_API_URL=http://${PaymentServiceEC2Instance.PrivateDnsName} \
+          --restart always \
+          --health-cmd="curl -f http://localhost/" \
+          --health-interval=5s \
+          --health-timeout=5s \
+          --health-retries=3 \
+          ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/micro-ecommerce-web
+    DependsOn:
+      - WebSecurityGroup
+      - PublicSubnet
+      - InstanceProfile
+      - OrderServiceEC2Instance
+      - PaymentServiceEC2Instance
+      - InventoryServiceEC2Instance
 
 Outputs:
 
-  KafkaInstanceOutput:
-    Description: EC2 Instance ID of the Kafka broker node
-    Value: !Ref KafkaEC2Instance
+  KafkaInstancePrivateDNS:
+    Description: Kafka private DNS name
+    Value: !GetAtt KafkaEC2Instance.PrivateDnsName
+
+  KafkaUIPublicDNS:
+    Description: Kafka UI public DNS name
+    Value: !GetAtt KafkaUIEC2Instance.PublicDnsName
+  
+  InventoryPostgresPrivateDNS:
+    Description: Private DNS name of the Inventory PostgreSQL Database
+    Value: !GetAtt InventoryPostgresEC2Instance.PrivateDnsName
+  
+  OrderPostgresPrivateDNS:
+    Description: Private DNS name of the Order PostgreSQL Database
+    Value: !GetAtt OrderPostgresEC2Instance.PrivateDnsName
+
+  PaymentPostgresPrivateDNS:
+    Description: Private DNS name of the Payment PostgreSQL Database
+    Value: !GetAtt PaymentPostgresEC2Instance.PrivateDnsName
+
+  DebeziumPrivateDNS:
+    Description: Private DNS name of the Debezium Service
+    Value: !GetAtt DebeziumEC2Instance.PrivateDnsName
+
+  DebeziumUIPublicDNS:
+    Description: Public DNS name of the Debezium UI EC2 Instance
+    Value: !GetAtt DebeziumUIEC2Instance.PublicDnsName
+
+  InventoryServicePrivateDNS:
+    Description: Private DNS name of the Inventory Service EC2 Instance
+    Value: !GetAtt InventoryServiceEC2Instance.PrivateDnsName
+
+  OrderServicePrivateDNS:
+    Description: Private DNS name of the Order Service EC2 Instance
+    Value: !GetAtt OrderServiceEC2Instance.PrivateDnsName
+
+  PaymentServicePrivateDNS:
+    Description: Private DNS name of the Payment Service EC2 Instance
+    Value: !GetAtt PaymentServiceEC2Instance.PrivateDnsName
+
+  WebInstancePublicDNS:
+    Description: Public DNS name of the Web EC2 Instance
+    Value: !GetAtt WebEC2Instance.PublicDnsName

@@ -712,32 +712,40 @@ Outputs:
     Description: Kafka service endpoint (EC2-based)
     Value: !GetAtt KafkaService.Name
 
+# docker buildx create --use
+
+# Login
 # aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 195275653332.dkr.ecr.eu-central-1.amazonaws.com
+# aws ecr get-login-password --region eu-central-1
+# docker login --username AWS --password {AccessKey} 195275653332.dkr.ecr.eu-central-1.amazonaws.com
 
-# Order
+# Inventory DB
+# aws ecr create-repository --repository-name micro-ecommerce-inventory-service-db --region eu-central-1
+# docker buildx build --push --platform linux/amd64,linux/arm64 -t 195275653332.dkr.ecr.eu-central-1.amazonaws.com/micro-ecommerce-inventory-service-db ./inventory-service-db/
+
+# Order DB
+# aws ecr create-repository --repository-name micro-ecommerce-order-service-db --region eu-central-1
+# docker buildx build --push --platform linux/amd64,linux/arm64 -t 195275653332.dkr.ecr.eu-central-1.amazonaws.com/micro-ecommerce-order-service-db ./order-service-db/
+
+# Payment DB
+# aws ecr create-repository --repository-name micro-ecommerce-payment-service-db --region eu-central-1
+# docker buildx build --push --platform linux/amd64,linux/arm64 -t 195275653332.dkr.ecr.eu-central-1.amazonaws.com/micro-ecommerce-payment-service-db ./payment-service-db/
+
+# Order service
 # aws ecr create-repository --repository-name micro-ecommerce-order-service --region eu-central-1
-# docker tag micro-ecommerce-order-service:latest 195275653332.dkr.ecr.eu-central-1.amazonaws.com/micro-ecommerce-order-service:latest
-# docker push 195275653332.dkr.ecr.eu-central-1.amazonaws.com/micro-ecommerce-order-service:latest
+# docker buildx build --push --platform linux/amd64,linux/arm64 -t 195275653332.dkr.ecr.eu-central-1.amazonaws.com/micro-ecommerce-order-service ./order-service/
 
-# Payment
+# Payment service
 # aws ecr create-repository --repository-name micro-ecommerce-payment-service --region eu-central-1
-# docker tag micro-ecommerce-payment-service:latest 195275653332.dkr.ecr.eu-central-1.amazonaws.com/micro-ecommerce-payment-service:latest
-# docker push 195275653332.dkr.ecr.eu-central-1.amazonaws.com/micro-ecommerce-payment-service:latest
+# docker buildx build --push --platform linux/amd64,linux/arm64 -t 195275653332.dkr.ecr.eu-central-1.amazonaws.com/micro-ecommerce-payment-service ./payment-service/
 
-# Inventory
+# Inventory service
 # aws ecr create-repository --repository-name micro-ecommerce-inventory-service --region eu-central-1
-# docker tag micro-ecommerce-inventory-service:latest 195275653332.dkr.ecr.eu-central-1.amazonaws.com/micro-ecommerce-inventory-service:latest
-# docker push 195275653332.dkr.ecr.eu-central-1.amazonaws.com/micro-ecommerce-inventory-service:latest
+# docker buildx build --push --platform linux/amd64,linux/arm64 -t 195275653332.dkr.ecr.eu-central-1.amazonaws.com/micro-ecommerce-inventory-service ./inventory-service/
 
 # Web
 # aws ecr create-repository --repository-name micro-ecommerce-web --region eu-central-1
-# docker tag micro-ecommerce-web:latest 195275653332.dkr.ecr.eu-central-1.amazonaws.com/micro-ecommerce-web:latest
-# docker push 195275653332.dkr.ecr.eu-central-1.amazonaws.com/micro-ecommerce-web:latest
-
-# Kafka
-# aws ecr create-repository --repository-name micro-ecommerce-kafka --region eu-central-1
-# docker tag apache/kafka:latest 195275653332.dkr.ecr.eu-central-1.amazonaws.com/micro-ecommerce-kafka:latest
-# docker push 195275653332.dkr.ecr.eu-central-1.amazonaws.com/micro-ecommerce-kafka:latest
+# docker buildx build --push --platform linux/amd64,linux/arm64 -t 195275653332.dkr.ecr.eu-central-1.amazonaws.com/micro-ecommerce-web ./webapp/
 
 # aws ecr list-images --repository-name <repository-name> --region eu-central-1
 
@@ -745,7 +753,7 @@ Outputs:
 # aws cloudformation create-stack --stack-name micro-ecommerce --template-body file://template.yaml --region eu-central-1 --capabilities CAPABILITY_NAMED_IAM
 
 # Deploy
-# aws cloudformation deploy --template-file template.yaml --stack-name micro-ecommerce --capabilities CAPABILITY_NAMED_IAM
+# aws cloudformation deploy --template-file template.yaml --stack-name micro-ecommerce --capabilities CAPABILITY_NAMED_IAM --parameter-overrides AccessKey=
 
 # Update
 # aws cloudformation update-stack --stack-name micro-ecommerce --template-body file://template.yaml --region eu-central-1
@@ -755,3 +763,7 @@ Outputs:
 
 # Delete
 # aws cloudformation delete-stack --stack-name micro-ecommerce --region eu-central-1
+
+# Debug
+# EC2 console log
+# sudo cat /var/log/cloud-init-output.log

@@ -1,12 +1,5 @@
 FROM postgres:15
 
-ARG POSTGRES_USER
-ARG POSTGRES_PASSWORD
-ARG POSTGRES_DB
-
-ENV POSTGRES_USER=$POSTGRES_USER
-ENV POSTGRES_PASSWORD=$POSTGRES_PASSWORD
-
 COPY init.sql /docker-entrypoint-initdb.d/init.sql
 COPY postgresql.conf /etc/postgresql/postgresql.conf
 
