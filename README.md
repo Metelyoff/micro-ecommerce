@@ -340,11 +340,127 @@ As a client (i.e., a service or component in the architecture that wants to proc
 ---
 By defining specific `OutboxEventHandler` implementations for each event, you create a flexible and maintainable way to manage complex event-driven logic within the application.
 
+## AWS CloudFormation IaC
+The cloud formation template code based on the AWS free tier resources.
+This AWS CloudFormation template provisions a Virtual Private Cloud (VPC) with public and private subnets,
+a NAT instance for private subnet internet access, and the necessary networking components like an internet gateway,
+route tables, and associations. It also includes IAM roles and instance profiles for the NAT instance,
+while enabling secure and isolated environments for different deployment stages (dev, staging, production).
+
+![Simple AWS scheme](micro-ecommerce-simple-composer-template.png)
+
+**Steps:**
+1. Create free account https://aws.amazon.com/free
+2. Install the AWS CLI https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html
+3. Setting up the AWS CLI https://docs.aws.amazon.com/cli/latest/userguide/getting-started-quickstart.html
+4. Give required roles for the cloud formation code template 
+5. Build and push docker images to the ECR
+6. Deploy to the AWS
+
+**Code quick sheets**
+
+Login to push docker images
+```shell
+aws ecr get-login-password --region <AWS::Region> | docker login --username AWS --password-stdin <AWS::AccountId>.dkr.ecr.<AWS::Region>.amazonaws.com
+```
+
+Use the multiplatform image builder
+```shell
+docker buildx create --use
+```
+
+**Build and push to the ECR**
+
+Replace the templates <AWS::AccountId> and <AWS::Region> with your configuration
+
+Inventory DB
+```shell
+aws ecr create-repository --repository-name micro-ecommerce-inventory-service-db --region <AWS::Region>
+docker buildx build --push --platform linux/amd64,linux/arm64 -t <AWS::AccountId>.dkr.ecr.<AWS::Region>.amazonaws.com/micro-ecommerce-inventory-service-db ./inventory-service-db/
+```
+
+Order DB
+```shell
+aws ecr create-repository --repository-name micro-ecommerce-order-service-db --region <AWS::Region>
+docker buildx build --push --platform linux/amd64,linux/arm64 -t <AWS::AccountId>.dkr.ecr.<AWS::Region>.amazonaws.com/micro-ecommerce-order-service-db ./order-service-db/
+```
+
+Payment DB
+```shell
+aws ecr create-repository --repository-name micro-ecommerce-payment-service-db --region <AWS::Region>
+docker buildx build --push --platform linux/amd64,linux/arm64 -t <AWS::AccountId>.dkr.ecr.<AWS::Region>.amazonaws.com/micro-ecommerce-payment-service-db ./payment-service-db/
+```
+
+Order service
+```shell
+aws ecr create-repository --repository-name micro-ecommerce-order-service --region <AWS::Region>
+docker buildx build --push --platform linux/amd64,linux/arm64 -t <AWS::AccountId>.dkr.ecr.<AWS::Region>.amazonaws.com/micro-ecommerce-order-service ./order-service/
+```
+
+Payment service
+```shell
+aws ecr create-repository --repository-name micro-ecommerce-payment-service --region <AWS::Region>
+docker buildx build --push --platform linux/amd64,linux/arm64 -t <AWS::AccountId>.dkr.ecr.<AWS::Region>.amazonaws.com/micro-ecommerce-payment-service ./payment-service/
+```
+
+Inventory service
+```shell
+aws ecr create-repository --repository-name micro-ecommerce-inventory-service --region <AWS::Region>
+docker buildx build --push --platform linux/amd64,linux/arm64 -t <AWS::AccountId>.dkr.ecr.<AWS::Region>.amazonaws.com/micro-ecommerce-inventory-service ./inventory-service/
+```
+
+Web
+```shell
+aws ecr create-repository --repository-name micro-ecommerce-web --region <AWS::Region>
+docker buildx build --push --platform linux/amd64,linux/arm64 -t <AWS::AccountId>.dkr.ecr.<AWS::Region>.amazonaws.com/micro-ecommerce-web ./webapp/
+```
+
+**Work with the AWS Stack set**
+
+Create
+```shell
+aws cloudformation create-stack --stack-name micro-ecommerce --template-body file://template.yaml --region <AWS::Region> --capabilities CAPABILITY_NAMED_IAM
+```
+
+Update
+```shell
+aws cloudformation update-stack --stack-name micro-ecommerce --template-body file://template.yaml --region <AWS::Region>
+```
+
+Describe
+```shell
+aws cloudformation describe-stacks --stack-name micro-ecommerce --region <AWS::Region>
+```
+
+Delete
+```shell
+aws cloudformation delete-stack --stack-name micro-ecommerce --region <AWS::Region>
+```
+
+Deploy (before deploy you should create the micro-ecommerce-stack S3 bucket where AWS upload and use template code)
+```shell
+aws cloudformation deploy --template-file template.yaml --stack-name micro-ecommerce --capabilities CAPABILITY_NAMED_IAM --s3-bucket micro-ecommerce-stack
+```
+
+Debug EC2 console log via SSH (you should create AWS Key Pair in the EC2 page)
+```shell
+sudo cat /var/log/cloud-init-output.log
+```
+
+After the deployment you should see the outputs (there will be 4 public DNS for the KafkaUI, DebeziumUI, NatInstance, and Web)
+After the all instances successfully started and running, you can remove ElasticIP and NatInstance to disable public traffic for the private subnet
+![aws-output-example.png](aws-output-example.png)
+Running instances example
+![aws-instances.png](aws-instances.png)
+Instance logs example
+![aws-cloud-watch-logs.png](aws-cloud-watch-logs.png)
+
 ## Future Enhancements
 - Implement CI/CD pipelines for seamless deployment.
 - Add more comprehensive testing for scalability and fault-tolerance.
-- Publish reusable Outbox dependencies to a public Maven repository.
 - Extend the system with additional services like Shipping and Notifications.
+- Configure AWS Load Balancing and Auto scaling group
+- Create AWS Lambda function to check payment expiration date
 
 ## Contributions
 Contributions via pull requests are welcome! Please follow the repository's contributing guidelines.
