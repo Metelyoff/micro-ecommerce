@@ -165,7 +165,7 @@ services:
           memory: 512M
 
   debezium:
-    image: debezium/connect:2.3
+    image: debezium/connect:2.7.3.Final
     container_name: debezium
     ports:
       - "8083:8083"
@@ -186,7 +186,7 @@ services:
       CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
     healthcheck:
-      test: [ "CMD-SHELL", "curl -s -o /dev/null -w \"%{http_code}\" http://debezium:8083/connectors | grep 200" ]
+      test: curl -f http://localhost:8083/connectors || exit 1
       interval: 10s
       retries: 5
       start_period: 15s
@@ -222,27 +222,22 @@ services:
           memory: 512M
 
   debezium-connector:
-    image: curlimages/curl:7.87.0
+    image: curlimages/curl
     container_name: debezium-connector
     depends_on:
-      - debezium
-      - kafka
-      - inventory-service-db
-      - order-service-db
-      - payment-service-db
+      debezium:
+        condition: service_healthy
     networks:
       - debezium
-    command: >
-      sh -c "
-      until curl -s http://debezium:8083/connectors; do sleep 5; done;
-      curl -X POST -H 'Content-Type: application/json' --data '@/connectors/order-service-connector.json' http://debezium:8083/connectors &&
-      curl -X POST -H 'Content-Type: application/json' --data '@/connectors/payment-service-connector.json' http://debezium:8083/connectors &&
-      curl -X POST -H 'Content-Type: application/json' --data '@/connectors/inventory-service-connector.json' http://debezium:8083/connectors
-      "
+    entrypoint: [ "sh", "/connectors/register-connectors.sh" ]
     volumes:
       - ./debezium-connectors:/connectors
     healthcheck:
-      test: [ "CMD-SHELL", "curl -s -o /dev/null -w '%{http_code}' http://debezium:8083/connectors/order-service-connector | grep -q 200 && curl -s -o /dev/null -w '%{http_code}' http://debezium:8083/connectors/payment-service-connector | grep -q 200 && curl -s -o /dev/null -w '%{http_code}' http://debezium:8083/connectors/inventory-service-connector | grep -q 200" ]
+      test: >
+        CMD-SHELL for f in /connectors/*.json; do
+          name=$(grep -o '"name"[[:space:]]*:[[:space:]]*"[^"]*"' "$f" | head -n1 | cut -d':' -f2 | tr -d ' "');
+          curl -sf http://debezium:8083/connectors/$name || exit 1;
+        done
       interval: 5s
       retries: 5
       start_period: 5s
