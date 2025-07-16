@@ -3,7 +3,7 @@ import ProductList from './components/ProductList';
 import Cart from './components/Cart';
 import PaymentModal from './components/PaymentModal';
 import './styles.css';
-import Config from './config.json';
+// import Config from './process.env.json';
 
 const useFetchProducts = () => {
   const [products, setProducts] = useState([]);
@@ -12,7 +12,7 @@ const useFetchProducts = () => {
   useEffect(() => {
     if (!fetchCalled.current) {
       fetchCalled.current = true;
-      fetch(`${Config.REACT_APP_PRODUCTS_API_URL}/items`)
+      fetch('$REACT_APP_PRODUCTS_API_URL/items')
         .then(response => response.json())
         .then(data => setProducts(data));
     }
@@ -92,12 +92,12 @@ const useOrderStatus = (setPaymentAmount, setPaymentExpiry, setIsCartLocked, set
       eventSourceRef.current.close(); // Close any previous SSE connections
     }
 
-    const newEventSource = new EventSource(`${Config.REACT_APP_ORDERS_API_URL}/orders/subscribe/${orderId}`);
+    const newEventSource = new EventSource(`$REACT_APP_ORDERS_API_URL/orders/subscribe/${orderId}`);
     newEventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
       setOrderStatuses(prevStatuses => [...prevStatuses, { status: data.status, statusDescription: data.statusDescription, paymentId: data.paymentId }]);
       if (data.status === 'PENDING_FOR_PAY' && data.paymentId) {
-        fetch(`${Config.REACT_APP_PAYMENTS_API_URL}/payments/${data.paymentId}`)
+        fetch(`$REACT_APP_PAYMENTS_API_URL/payments/${data.paymentId}`)
           .then(response => response.json())
           .then(paymentData => {
             setPaymentAmount(paymentData.amount);
@@ -135,10 +135,10 @@ const useOrderStatus = (setPaymentAmount, setPaymentExpiry, setIsCartLocked, set
     const savedOrderId = localStorage.getItem('currentOrderId');
     if (savedOrderId) {
       subscribeToOrderStatus(savedOrderId);
-      fetch(`${Config.REACT_APP_ORDERS_API_URL}/orders/${savedOrderId}`)
+      fetch(`$REACT_APP_ORDERS_API_URL/orders/${savedOrderId}`)
         .then(response => response.json())
         .then(orderData => {
-          fetch(`${Config.REACT_APP_PAYMENTS_API_URL}/payments/${orderData.paymentId}`)
+          fetch(`$REACT_APP_PAYMENTS_API_URL/payments/${orderData.paymentId}`)
             .then(response => response.json())
             .then(paymentData => {
               setPaymentAmount(paymentData.amount);
@@ -191,7 +191,7 @@ const App = () => {
       }))
     };
 
-    fetch(`${Config.REACT_APP_ORDERS_API_URL}/orders`, {
+    fetch('$REACT_APP_ORDERS_API_URL/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(order)
