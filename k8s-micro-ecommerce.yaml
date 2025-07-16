@@ -427,53 +427,6 @@ spec:
       targetPort: 29093
   type: ClusterIP
 ---
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: kafka-ui
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: kafka-ui
-  template:
-    metadata:
-      labels:
-        app: kafka-ui
-    spec:
-      containers:
-        - name: kafka-ui
-          image: provectuslabs/kafka-ui:latest
-          ports:
-            - containerPort: 8080
-          env:
-            - name: KAFKA_CLUSTERS_0_NAME
-              value: "ecommerce"
-            - name: KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS
-              value: "kafka:29092"
-            - name: DYNAMIC_CONFIG_ENABLED
-              value: "true"
-            - name: SPRING_PROFILES_ACTIVE
-              value: "prod"
-          resources:
-            limits:
-              memory: "512Mi"
-              cpu: "500m"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: kafka-ui
-spec:
-  selector:
-    app: kafka-ui
-  ports:
-    - protocol: TCP
-      port: 8080
-      targetPort: 8080
-      name: http
-  type: ClusterIP
----
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -579,6 +532,12 @@ spec:
               value: org.apache.kafka.connect.json.JsonConverter
             - name: CONNECT_VALUE_CONVERTER
               value: org.apache.kafka.connect.json.JsonConverter
+            - name: CONNECT_ACCESS_CONTROL_ALLOW_ORIGIN
+              value: "*"
+            - name: CONNECT_ACCESS_CONTROL_ALLOW_METHODS
+              value: "GET,POST,PUT,DELETE"
+            - name: CONNECT_ACCESS_CONTROL_ALLOW_HEADERS
+              value: "origin,content-type,accept,authorization"
 #          resources:
 #            limits:
 #              memory: "512Mi"
@@ -596,6 +555,26 @@ spec:
       port: 8083
       targetPort: 8083
   type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: debezium-ingress
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: debezium.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: debezium
+                port:
+                  number: 8083
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -615,10 +594,10 @@ spec:
         - name: debezium-ui
           image: docker.io/metelyoff/debezium-ui-arm64:latest
           ports:
-            - containerPort: 8080
+            - containerPort: 80
           env:
-            - name: KAFKA_CONNECT_URIS
-              value: "http://debezium:8083"
+            - name: KAFKA_CONNECT_CLUSTERS
+              value: "http://debezium:8083/,http://debezium.local/"
           resources:
             limits:
               memory: "512Mi"
@@ -634,7 +613,7 @@ spec:
   ports:
     - protocol: TCP
       port: 8080
-      targetPort: 8080
+      targetPort: 80
       name: http
   type: ClusterIP
 ---
@@ -647,7 +626,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: debezium.local
+    - host: debezium-ui.local
       http:
         paths:
           - path: /
@@ -679,7 +658,9 @@ data:
         -H "Content-Type: application/json" \
         --data @"$f" http://debezium:8083/connectors)
     
-      if [ "$response" -eq 200 ]; then
+      if [ "$response" -eq 201 ]; then
+        echo "Registered $name"
+      elif [ "$response" -eq 200 ]; then
         echo "Registered $name"
       elif [ "$response" -eq 409 ]; then
         echo "Connector $name already exists"
