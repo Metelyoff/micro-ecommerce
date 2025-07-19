@@ -74,11 +74,6 @@ jobs:
           mkdir -p ~/.kube
           echo "${{ secrets.KUBE_CONFIG }}" | base64 --decode > ~/.kube/config
 
-      - name: Install cloudflared
-        run: |
-          sudo mkdir -p /etc/cloudflared
-          echo "${{ secrets.CLOUDFLARE_TUNNEL_TOKEN }}" | sudo tee /etc/cloudflared/creds.json > /dev/null
-
       - name: Prepare deployment files
         run: |
           cp k8s-micro-ecommerce.yaml template.yaml

@@ -1062,6 +1062,10 @@ data:
     ingress:
       - hostname: "${DOMAIN}"
         service: http://web.ecommerce.svc.cluster.local:80
+      - hostname: "cd.${DOMAIN}"
+        service: https://localhost:6443
+        originRequest:
+          noTLSVerify: true
       - service: http_status:404
 ---
 apiVersion: v1
