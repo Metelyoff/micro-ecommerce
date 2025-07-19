@@ -81,6 +81,9 @@ jobs:
             '${IMAGE_NAME} ${ORDER_POSTGRES_USER} ${ORDER_POSTGRES_PASSWORD} ${PAYMENT_POSTGRES_USER} ${PAYMENT_POSTGRES_PASSWORD} ${INVENTORY_POSTGRES_USER} ${INVENTORY_POSTGRES_PASSWORD} ${CLOUDFLARE_TUNNEL_TOKEN} ${DOMAIN}' \
             < template.yaml > k8s-micro-ecommerce.yaml
 
+      - name: Use correct kube context
+        run: kubectl config use-context github-actions-k3s
+
       - name: Apply manifest to Raspberry Pi cluster
         run: |
           kubectl apply -f k8s-micro-ecommerce.yaml
