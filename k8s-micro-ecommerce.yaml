@@ -1,8 +1,18 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ecommerce
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: order-postgres-init-sql
+  namespace: ecommerce
 data:
   order_init.sql: |
     \c postgres;
@@ -14,6 +24,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: order-postgres-config
+  namespace: ecommerce
 data:
   postgresql.conf: |
     listen_addresses = '*'
@@ -33,21 +44,11 @@ data:
     max_replication_slots = 10
     max_wal_senders = 10
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: order-service-db-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
----
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: order-postgres
+  namespace: ecommerce
 spec:
   serviceName: "order-postgres"
   replicas: 1
@@ -75,9 +76,9 @@ spec:
               subPath: order_init.sql
           env:
             - name: POSTGRES_USER
-              value: postgres
+              value: "${ORDER_POSTGRES_USER}"
             - name: POSTGRES_PASSWORD
-              value: postgres
+              value: "${ORDER_POSTGRES_PASSWORD}"
             - name: POSTGRES_DB
               value: order_service_db
           args:
@@ -108,6 +109,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: order-service-db
+  namespace: ecommerce
 spec:
   selector:
     app: order-postgres
@@ -121,6 +123,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: payment-postgres-init-sql
+  namespace: ecommerce
 data:
   payment_init.sql: |
     \c postgres;
@@ -132,6 +135,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: payment-postgres-config
+  namespace: ecommerce
 data:
   postgresql.conf: |
     listen_addresses = '*'
@@ -151,21 +155,11 @@ data:
     max_replication_slots = 10
     max_wal_senders = 10
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: payment-service-db-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
----
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: payment-postgres
+  namespace: ecommerce
 spec:
   serviceName: "payment-postgres"
   replicas: 1
@@ -193,9 +187,9 @@ spec:
               subPath: payment_init.sql
           env:
             - name: POSTGRES_USER
-              value: postgres
+              value: "${PAYMENT_POSTGRES_USER}"
             - name: POSTGRES_PASSWORD
-              value: postgres
+              value: "${PAYMENT_POSTGRES_PASSWORD}"
             - name: POSTGRES_DB
               value: payment_service_db
           args:
@@ -226,6 +220,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: payment-service-db
+  namespace: ecommerce
 spec:
   selector:
     app: payment-postgres
@@ -239,6 +234,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: inventory-postgres-init-sql
+  namespace: ecommerce
 data:
   inventory_init.sql: |
     \c postgres;
@@ -250,6 +246,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: inventory-postgres-config
+  namespace: ecommerce
 data:
   postgresql.conf: |
     listen_addresses = '*'
@@ -269,21 +266,11 @@ data:
     max_replication_slots = 10
     max_wal_senders = 10
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: inventory-service-db-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
----
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: inventory-postgres
+  namespace: ecommerce
 spec:
   serviceName: "inventory-postgres"
   replicas: 1
@@ -311,9 +298,9 @@ spec:
           subPath: inventory_init.sql
         env:
         - name: POSTGRES_USER
-          value: postgres
+          value: "${INVENTORY_POSTGRES_USER}"
         - name: POSTGRES_PASSWORD
-          value: postgres
+          value: "${INVENTORY_POSTGRES_PASSWORD}"
         - name: POSTGRES_DB
           value: inventory_service_db
         args:
@@ -344,6 +331,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: inventory-service-db
+  namespace: ecommerce
 spec:
   selector:
     app: inventory-postgres
@@ -357,6 +345,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kafka
+  namespace: ecommerce
 spec:
   replicas: 1
   selector:
@@ -413,6 +402,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: kafka
+  namespace: ecommerce
 spec:
   selector:
     app: kafka
@@ -431,6 +421,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: kafka-ui-ingress
+  namespace: ecommerce
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
@@ -451,6 +442,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kafka-ui
+  namespace: ecommerce
 spec:
   replicas: 1
   selector:
@@ -484,6 +476,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: kafka-ui
+  namespace: ecommerce
 spec:
   selector:
     app: kafka-ui
@@ -498,6 +491,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: debezium
+  namespace: ecommerce
 spec:
   replicas: 1
   selector:
@@ -510,7 +504,7 @@ spec:
     spec:
       containers:
         - name: debezium
-          image: debezium/connect:2.7.3.Final
+          image: quay.io/debezium/connect
           ports:
             - containerPort: 8083
           env:
@@ -535,7 +529,7 @@ spec:
             - name: CONNECT_ACCESS_CONTROL_ALLOW_ORIGIN
               value: "*"
             - name: CONNECT_ACCESS_CONTROL_ALLOW_METHODS
-              value: "GET,POST,PUT,DELETE"
+              value: "GET"
             - name: CONNECT_ACCESS_CONTROL_ALLOW_HEADERS
               value: "origin,content-type,accept,authorization"
 #          resources:
@@ -547,6 +541,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: debezium
+  namespace: ecommerce
 spec:
   selector:
     app: debezium
@@ -560,6 +555,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: debezium-ingress
+  namespace: ecommerce
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
@@ -580,6 +576,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: debezium-ui
+  namespace: ecommerce
 spec:
   replicas: 1
   selector:
@@ -597,7 +594,7 @@ spec:
             - containerPort: 80
           env:
             - name: KAFKA_CONNECT_CLUSTERS
-              value: "http://debezium:8083/,http://debezium.local/"
+              value: "http://debezium.local/,http://debezium:8083/"
           resources:
             limits:
               memory: "512Mi"
@@ -607,6 +604,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: debezium-ui
+  namespace: ecommerce
 spec:
   selector:
     app: debezium-ui
@@ -621,6 +619,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: debezium-ui-ingress
+  namespace: ecommerce
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
@@ -641,16 +640,11 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: debezium-connectors
+  namespace: ecommerce
 data:
   register-connectors.sh: |
     #!/bin/sh
-    echo 'Waiting for Debezium REST API...'
-    until curl -s http://debezium:8083/connectors > /dev/null; do
-      echo '...still waiting...'
-      sleep 2
-    done
-    
-    echo 'Debezium is ready. Registering connectors...'
+    echo "Registering connectors"
     for f in /connectors/*.json; do
       name=$(grep -o '"name"[[:space:]]*:[[:space:]]*"[^"]*"' "$f" | head -n1 | cut -d':' -f2 | tr -d ' "')
       echo "Registering connector: $name"
@@ -676,8 +670,8 @@ data:
         "tasks.max": "1",
         "database.hostname": "inventory-service-db",
         "database.port": "5432",
-        "database.user": "postgres",
-        "database.password": "postgres",
+        "database.user": "${INVENTORY_POSTGRES_USER}",
+        "database.password": "${INVENTORY_POSTGRES_PASSWORD}",
         "database.dbname": "inventory_service_db",
         "database.server.name": "inventory_service",
         "plugin.name": "pgoutput",
@@ -703,8 +697,8 @@ data:
         "tasks.max": "1",
         "database.hostname": "order-service-db",
         "database.port": "5432",
-        "database.user": "postgres",
-        "database.password": "postgres",
+        "database.user": "${ORDER_POSTGRES_USER}",
+        "database.password": "${ORDER_POSTGRES_PASSWORD}",
         "database.dbname": "order_service_db",
         "database.server.name": "order_service",
         "plugin.name": "pgoutput",
@@ -730,8 +724,8 @@ data:
         "tasks.max": "1",
         "database.hostname": "payment-service-db",
         "database.port": "5432",
-        "database.user": "postgres",
-        "database.password": "postgres",
+        "database.user": "${PAYMENT_POSTGRES_USER}",
+        "database.password": "${PAYMENT_POSTGRES_PASSWORD}",
         "database.dbname": "payment_service_db",
         "database.server.name": "payment_service",
         "plugin.name": "pgoutput",
@@ -754,14 +748,28 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: debezium-connector
+  namespace: ecommerce
 spec:
   template:
     spec:
       restartPolicy: Never
+      initContainers:
+        - name: wait-for-debezium
+          image: curlimages/curl
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for Debezium to become available..."
+              until curl -s http://debezium:8083/connectors > /dev/null; do
+                echo "Debezium not ready, retrying..."
+                sleep 3
+              done
+              echo "Debezium is ready!"
       containers:
         - name: debezium-connector
           image: curlimages/curl
-          command: [ "sh", "/connectors/register-connectors.sh" ]
+          command: ["sh", "/connectors/register-connectors.sh"]
           volumeMounts:
             - name: connector-configs
               mountPath: /connectors
@@ -774,6 +782,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: payment-service
+  namespace: ecommerce
   labels:
     app: payment-service
 spec:
@@ -788,16 +797,16 @@ spec:
     spec:
       containers:
         - name: payment-service
-          image: metelyoff/payment-service:latest
+          image: docker.io/metelyoff/payment-service:latest
           ports:
             - containerPort: 8080
           env:
             - name: DATABASE_URL
               value: jdbc:postgresql://payment-service-db:5432/payment_service_db
             - name: DATABASE_USERNAME
-              value: postgres
+              value: "${PAYMENT_POSTGRES_USER}"
             - name: DATABASE_PASSWORD
-              value: postgres
+              value: "${PAYMENT_POSTGRES_PASSWORD}"
             - name: KAFKA_URI
               value: kafka:29092
             - name: DEBEZIUM_DESTINATION
@@ -822,6 +831,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: payment-service
+  namespace: ecommerce
 spec:
   selector:
     app: payment-service
@@ -836,6 +846,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: inventory-service
+  namespace: ecommerce
   labels:
     app: inventory-service
 spec:
@@ -850,16 +861,16 @@ spec:
     spec:
       containers:
         - name: inventory-service
-          image: metelyoff/inventory-service:latest
+          image: docker.io/metelyoff/inventory-service:latest
           ports:
             - containerPort: 8080
           env:
             - name: DATABASE_URL
               value: jdbc:postgresql://inventory-service-db:5432/inventory_service_db
             - name: DATABASE_USERNAME
-              value: postgres
+              value: "${INVENTORY_POSTGRES_USER}"
             - name: DATABASE_PASSWORD
-              value: postgres
+              value: "${INVENTORY_POSTGRES_PASSWORD}"
             - name: KAFKA_URI
               value: kafka:29092
             - name: DEBEZIUM_DESTINATION
@@ -882,6 +893,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: inventory-service
+  namespace: ecommerce
 spec:
   selector:
     app: inventory-service
@@ -896,6 +908,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: order-service
+  namespace: ecommerce
   labels:
     app: order-service
 spec:
@@ -910,16 +923,16 @@ spec:
     spec:
       containers:
         - name: order-service
-          image: metelyoff/order-service:latest
+          image: docker.io/metelyoff/order-service:latest
           ports:
             - containerPort: 8080
           env:
             - name: DATABASE_URL
               value: jdbc:postgresql://order-service-db:5432/order_service_db
             - name: DATABASE_USERNAME
-              value: postgres
+              value: "${ORDER_POSTGRES_USER}"
             - name: DATABASE_PASSWORD
-              value: postgres
+              value: "${ORDER_POSTGRES_PASSWORD}"
             - name: KAFKA_URI
               value: kafka:29092
             - name: DEBEZIUM_DESTINATION
@@ -942,6 +955,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: order-service
+  namespace: ecommerce
 spec:
   selector:
     app: order-service
@@ -956,6 +970,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: web
+  namespace: ecommerce
   labels:
     app: web
 spec:
@@ -970,16 +985,16 @@ spec:
     spec:
       containers:
         - name: web
-          image: metelyoff/webapp:latest
+          image: docker.io/metelyoff/webapp:latest
           ports:
             - containerPort: 80
           env:
             - name: REACT_APP_PRODUCTS_API_URL
-              value: https://rpik3s.xyz/api
+              value: "${DOMAIN}/api"
             - name: REACT_APP_ORDERS_API_URL
-              value: https://rpik3s.xyz/api
+              value: "${DOMAIN}/api"
             - name: REACT_APP_PAYMENTS_API_URL
-              value: https://rpik3s.xyz/api
+              value: "${DOMAIN}/api"
             - name: BACKEND_PRODUCTS_API_URL
               value: http://inventory-service:8084
             - name: BACKEND_ORDERS_API_URL
@@ -1003,6 +1018,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: web
+  namespace: ecommerce
 spec:
   selector:
     app: web
@@ -1017,13 +1033,13 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: web-ingress
-  namespace: default
+  namespace: ecommerce
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   ingressClassName: nginx
   rules:
-    - host: rpik3s.xyz
+    - host: "${DOMAIN}"
       http:
         paths:
           - path: /
@@ -1033,3 +1049,181 @@ spec:
                 name: web
                 port:
                   number: 80
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudflared-config
+  namespace: ecommerce
+data:
+  config.yml: |
+    tunnel: rpik3s-tunnel
+    credentials-file: /etc/cloudflared/creds.json
+    ingress:
+      - hostname: rpik3s.xyz
+        service: http://web.ecommerce.svc.cluster.local:80
+      - service: http_status:404
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cloudflared-creds
+  namespace: ecommerce
+type: Opaque
+data:
+  creds.json: "${CLOUDFLARE_TUNNEL_TOKEN}"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudflared
+  namespace: ecommerce
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudflared
+  template:
+    metadata:
+      labels:
+        app: cloudflared
+    spec:
+      initContainers:
+        - name: wait-for-web
+          image: curlimages/curl
+          command: ['sh', '-c', 'until curl -s web:80 > /dev/null; do echo waiting for web; sleep 2; done;']
+      containers:
+        - name: cloudflared
+          image: cloudflare/cloudflared:latest
+          args:
+            - tunnel
+            - run
+            - rpik3s-tunnel
+          volumeMounts:
+            - name: config
+              mountPath: /etc/cloudflared/config.yml
+              subPath: config.yml
+            - name: creds
+              mountPath: /etc/cloudflared/creds.json
+              subPath: creds.json
+      volumes:
+        - name: config
+          configMap:
+            name: cloudflared-config
+        - name: creds
+          secret:
+            secretName: cloudflared-creds
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+    scrape_configs:
+      - job_name: 'kubernetes'
+        static_configs:
+          - targets: ['order-service:8086', 'payment-service:8085', 'inventory-service:8084']
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+        - name: prometheus
+          image: prom/prometheus
+          args:
+            - "--config.file=/etc/prometheus/prometheus.yml"
+          ports:
+            - containerPort: 9090
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus
+      volumes:
+        - name: config
+          configMap:
+            name: prometheus-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  selector:
+    app: prometheus
+  ports:
+    - protocol: TCP
+      port: 9090
+      targetPort: 9090
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana
+          ports:
+            - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: monitoring
+spec:
+  selector:
+    app: grafana
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-ingress
+  namespace: monitoring
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: grafana.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana
+                port:
+                  number: 3000
