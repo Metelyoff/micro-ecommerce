@@ -3,6 +3,12 @@ name: Raspberry Pi CI/CD
 on:
   push:
     branches: [k8s]
+    paths:
+      - 'inventory-service/**'
+      - 'order-service/**'
+      - 'payment-service/**'
+      - 'webapp/**'
+      - '.github/workflows/k8s-actions.yml'
 
 env:
   IMAGE_NAME: metelyoff/micro-ecommerce
@@ -11,23 +17,35 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     environment: rpc3s
+    strategy:
+      matrix:
+        service: [ inventory-service, order-service, payment-service, webapp ]
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build and push Docker images
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
         run: |
-          docker buildx rm builder || true
-          docker buildx create --use
           services=(inventory-service order-service payment-service webapp)
           for service in "${services[@]}"; do
             docker buildx build \
-            --platform linux/arm64 \
-            -t $IMAGE_NAME:$service \
-            -f $service/Dockerfile \
-            --push $service
+              --platform linux/arm64 \
+              --cache-from=type=local,src=/tmp/.buildx-cache \
+              --cache-to=type=local,dest=/tmp/.buildx-cache \
+              -t $IMAGE_NAME:$service \
+              -f $service/Dockerfile \
+              --push $service
           done
 
   deploy:
@@ -44,7 +62,8 @@ jobs:
       CLOUDFLARE_TUNNEL_TOKEN: ${{ secrets.CLOUDFLARE_TUNNEL_TOKEN }}
       DOMAIN: ${{ secrets.DOMAIN }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up kubeconfig
         run: |
@@ -56,10 +75,13 @@ jobs:
           sudo mkdir -p /etc/cloudflared
           echo "${{ secrets.CLOUDFLARE_TUNNEL_TOKEN }}" | sudo tee /etc/cloudflared/creds.json > /dev/null
 
-      - name: Set up envs
+      - name: Prepare deployment files
         run: |
-          envsubst < k8s-micro-ecommerce.yaml > k8s-micro-ecommerce.yaml
+          cp k8s-micro-ecommerce.yaml template.yaml
+          envsubst \
+            '${IMAGE_NAME} ${ORDER_POSTGRES_USER} ${ORDER_POSTGRES_PASSWORD} ${PAYMENT_POSTGRES_USER} ${PAYMENT_POSTGRES_PASSWORD} ${INVENTORY_POSTGRES_USER} ${INVENTORY_POSTGRES_PASSWORD} ${CLOUDFLARE_TUNNEL_TOKEN} ${DOMAIN}' \
+            < template.yaml > k8s-micro-ecommerce.yaml
 
-      - name: Deploy to Raspberry Pi k3s
+      - name: Apply manifest to Raspberry Pi cluster
         run: |
           kubectl apply -f k8s-micro-ecommerce.yaml

@@ -797,7 +797,7 @@ spec:
     spec:
       containers:
         - name: payment-service
-          image: docker.io/metelyoff/payment-service:latest
+          image: ${IMAGE_NAME}:payment-service
           ports:
             - containerPort: 8080
           env:
@@ -861,7 +861,7 @@ spec:
     spec:
       containers:
         - name: inventory-service
-          image: docker.io/metelyoff/inventory-service:latest
+          image: ${IMAGE_NAME}:inventory-service
           ports:
             - containerPort: 8080
           env:
@@ -923,7 +923,7 @@ spec:
     spec:
       containers:
         - name: order-service
-          image: docker.io/metelyoff/order-service:latest
+          image: ${IMAGE_NAME}:order-service
           ports:
             - containerPort: 8080
           env:
@@ -985,16 +985,16 @@ spec:
     spec:
       containers:
         - name: web
-          image: docker.io/metelyoff/webapp:latest
+          image: ${IMAGE_NAME}:webapp
           ports:
             - containerPort: 80
           env:
             - name: REACT_APP_PRODUCTS_API_URL
-              value: "${DOMAIN}/api"
+              value: "https://${DOMAIN}/api"
             - name: REACT_APP_ORDERS_API_URL
-              value: "${DOMAIN}/api"
+              value: "https://${DOMAIN}/api"
             - name: REACT_APP_PAYMENTS_API_URL
-              value: "${DOMAIN}/api"
+              value: "https://${DOMAIN}/api"
             - name: BACKEND_PRODUCTS_API_URL
               value: http://inventory-service:8084
             - name: BACKEND_ORDERS_API_URL
@@ -1060,7 +1060,7 @@ data:
     tunnel: rpik3s-tunnel
     credentials-file: /etc/cloudflared/creds.json
     ingress:
-      - hostname: rpik3s.xyz
+      - hostname: "${DOMAIN}"
         service: http://web.ecommerce.svc.cluster.local:80
       - service: http_status:404
 ---
