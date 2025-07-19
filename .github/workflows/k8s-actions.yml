@@ -5,12 +5,12 @@ on:
     branches: [k8s]
 
 env:
-  ENVIRONMENT: rpc3s
   IMAGE_NAME: metelyoff/micro-ecommerce
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    environment: rpc3s
     steps:
       - uses: actions/checkout@v4
 
@@ -32,6 +32,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
+    environment: rpc3s
     needs: build-and-push
     env:
       ORDER_POSTGRES_USER: ${{ secrets.ORDER_POSTGRES_USER }}
