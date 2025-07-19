@@ -54,7 +54,7 @@ jobs:
       - name: Install cloudflared
         run: |
           sudo mkdir -p /etc/cloudflared
-          echo "${{ secrets.CLOUDFLARE_TUNNEL_TOKEN }}" > /etc/cloudflared/creds.json
+          echo "${{ secrets.CLOUDFLARE_TUNNEL_TOKEN }}" | sudo tee /etc/cloudflared/creds.json > /dev/null
 
       - name: Set up envs
         run: |
