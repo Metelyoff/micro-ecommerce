@@ -5,6 +5,7 @@ on:
     branches: [k8s]
 
 env:
+  ENVIRONMENT: rpc3s
   IMAGE_NAME: metelyoff/micro-ecommerce
 
 jobs:
