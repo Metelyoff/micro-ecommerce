@@ -15,7 +15,7 @@ env:
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     environment: rpc3s
     strategy:
       matrix:
@@ -53,7 +53,7 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
 
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     environment: rpc3s
     needs: build-and-push
     env:
