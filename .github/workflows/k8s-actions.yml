@@ -30,16 +30,16 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Cache Docker layers
+      - name: Restore Docker cache
         uses: actions/cache@v4
         with:
-          path: /tmp/.buildx-cache
+          path: /tmp/.buildx-cache-${{ matrix.service }}
           key: ${{ runner.os }}-buildx-${{ matrix.service }}-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-${{ matrix.service }}-
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Build and push Docker image (${{ matrix.service }})
         uses: docker/build-push-action@v5
@@ -49,8 +49,8 @@ jobs:
           platforms: linux/arm64
           push: true
           tags: ${{ env.IMAGE_NAME }}:${{ matrix.service }}
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
+          cache-from: type=local,src=/tmp/.buildx-cache-${{ matrix.service }}
+          cache-to: type=local,dest=/tmp/.buildx-cache-${{ matrix.service }},mode=max
 
   deploy:
     runs-on: self-hosted
@@ -80,9 +80,6 @@ jobs:
           envsubst \
             '${IMAGE_NAME} ${ORDER_POSTGRES_USER} ${ORDER_POSTGRES_PASSWORD} ${PAYMENT_POSTGRES_USER} ${PAYMENT_POSTGRES_PASSWORD} ${INVENTORY_POSTGRES_USER} ${INVENTORY_POSTGRES_PASSWORD} ${CLOUDFLARE_TUNNEL_TOKEN} ${DOMAIN}' \
             < template.yaml > k8s-micro-ecommerce.yaml
-
-#      - name: Use correct kube context
-#        run: kubectl config use-context github-actions-k3s
 
       - name: Apply manifest to Raspberry Pi cluster
         run: |

@@ -453,6 +453,10 @@ spec:
       labels:
         app: kafka-ui
     spec:
+      initContainers:
+        - name: wait-for-kafka
+          image: busybox
+          command: [ 'sh', '-c', 'until nc -z kafka 9092; do echo "Waiting for Kafka..."; sleep 2; done' ]
       containers:
         - name: kafka-ui
           image: provectuslabs/kafka-ui:latest
@@ -502,6 +506,26 @@ spec:
       labels:
         app: debezium
     spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              until nc -z order-service-db 5432 &&
+                    nc -z payment-service-db 5432 &&
+                    nc -z inventory-service-db 5432;
+              do
+                echo "Waiting for Postgres...";
+                sleep 2;
+              done
+        - name: wait-for-kafka
+          image: busybox:latest
+          command:
+            - /bin/sh
+            - -c
+            - until nc -z kafka 9092; do echo "Waiting for Kafka..."; sleep 2; done
       containers:
         - name: debezium
           image: quay.io/debezium/connect
@@ -587,6 +611,19 @@ spec:
       labels:
         app: debezium-ui
     spec:
+      initContainers:
+        - name: wait-for-debezium
+          image: busybox
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for Debezium to become available..."
+              until wget -q --spider http://debezium:8083; do
+                echo "Debezium not ready, retrying..."
+                sleep 3
+              done
+              echo "Debezium is ready!"
       containers:
         - name: debezium-ui
           image: docker.io/metelyoff/debezium-ui-arm64:latest
@@ -795,6 +832,13 @@ spec:
       labels:
         app: payment-service
     spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:latest
+          command:
+            - /bin/sh
+            - -c
+            - until payment-service-db 5432; do echo "Waiting for Postgres..."; sleep 2; done
       containers:
         - name: payment-service
           image: ${IMAGE_NAME}:payment-service
@@ -859,6 +903,13 @@ spec:
       labels:
         app: inventory-service
     spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:latest
+          command:
+            - /bin/sh
+            - -c
+            - until inventory-service-db 5432; do echo "Waiting for Postgres..."; sleep 2; done
       containers:
         - name: inventory-service
           image: ${IMAGE_NAME}:inventory-service
@@ -921,6 +972,13 @@ spec:
       labels:
         app: order-service
     spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:latest
+          command:
+            - /bin/sh
+            - -c
+            - until order-service-db 5432; do echo "Waiting for Postgres..."; sleep 2; done
       containers:
         - name: order-service
           image: ${IMAGE_NAME}:order-service
@@ -983,6 +1041,20 @@ spec:
       labels:
         app: web
     spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              until nc -z order-service 8086 &&
+                    nc -z payment-service 8085 &&
+                    nc -z inventory-service 8084;
+              do
+                echo "Waiting for services...";
+                sleep 5;
+              done
       containers:
         - name: web
           image: ${IMAGE_NAME}:webapp
