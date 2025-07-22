@@ -456,7 +456,7 @@ spec:
       initContainers:
         - name: wait-for-kafka
           image: busybox
-          command: [ 'sh', '-c', 'until nc -z kafka 9092; do echo "Waiting for Kafka..."; sleep 2; done' ]
+          command: [ 'sh', '-c', 'until nc -z kafka 29092; do echo "Waiting for Kafka..."; sleep 2; done' ]
       containers:
         - name: kafka-ui
           image: provectuslabs/kafka-ui:latest
@@ -525,7 +525,7 @@ spec:
           command:
             - /bin/sh
             - -c
-            - until nc -z kafka 9092; do echo "Waiting for Kafka..."; sleep 2; done
+            - until nc -z kafka 29092; do echo "Waiting for Kafka..."; sleep 2; done
       containers:
         - name: debezium
           image: quay.io/debezium/connect
