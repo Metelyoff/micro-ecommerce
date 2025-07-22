@@ -792,13 +792,13 @@ spec:
       restartPolicy: Never
       initContainers:
         - name: wait-for-debezium
-          image: curlimages/curl
+          image: busybox
           command:
             - sh
             - -c
             - |
               echo "Waiting for Debezium to become available..."
-              until curl -s http://debezium:8083/connectors > /dev/null; do
+              until wget -q --spider http://debezium:8083/connectors; do
                 echo "Debezium not ready, retrying..."
                 sleep 3
               done
@@ -838,7 +838,7 @@ spec:
           command:
             - /bin/sh
             - -c
-            - until payment-service-db 5432; do echo "Waiting for Postgres..."; sleep 2; done
+            - until nc -z payment-service-db 5432; do echo "Waiting for Postgres..."; sleep 2; done
       containers:
         - name: payment-service
           image: ${IMAGE_NAME}:payment-service
@@ -909,7 +909,7 @@ spec:
           command:
             - /bin/sh
             - -c
-            - until inventory-service-db 5432; do echo "Waiting for Postgres..."; sleep 2; done
+            - until nc -z inventory-service-db 5432; do echo "Waiting for Postgres..."; sleep 2; done
       containers:
         - name: inventory-service
           image: ${IMAGE_NAME}:inventory-service
@@ -978,7 +978,7 @@ spec:
           command:
             - /bin/sh
             - -c
-            - until order-service-db 5432; do echo "Waiting for Postgres..."; sleep 2; done
+            - until nc -z order-service-db 5432; do echo "Waiting for Postgres..."; sleep 2; done
       containers:
         - name: order-service
           image: ${IMAGE_NAME}:order-service
@@ -1042,7 +1042,7 @@ spec:
         app: web
     spec:
       initContainers:
-        - name: wait-for-postgres
+        - name: wait-for-services
           image: busybox:latest
           command:
             - /bin/sh
