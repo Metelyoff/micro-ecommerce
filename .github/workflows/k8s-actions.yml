@@ -84,4 +84,3 @@ jobs:
       - name: Apply manifest to Raspberry Pi cluster
         run: |
           kubectl apply -f k8s-micro-ecommerce.yaml --kubeconfig ~/.kube/config
-
