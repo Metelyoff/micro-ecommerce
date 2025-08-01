@@ -28,7 +28,7 @@ jobs:
   build-and-push:
     if: ${{ github.event.inputs.triggerBuild == 'true' }}
     runs-on: self-hosted
-    environment: ${{ secrets.ENVIRONMENT }}
+    environment: rpc3s
     strategy:
       matrix:
         service: [ inventory-service, order-service, payment-service, webapp ]
@@ -74,7 +74,7 @@ jobs:
   deploy:
     if: ${{ github.event.inputs.triggerDeploy == 'true' }}
     runs-on: self-hosted
-    environment: ${{ secrets.ENVIRONMENT }}
+    environment: rpc3s
     needs: build-and-push
     env:
       ENV_PROFILE: ${{ env.ENV_PROFILE }}

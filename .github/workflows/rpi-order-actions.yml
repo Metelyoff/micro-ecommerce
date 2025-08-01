@@ -14,7 +14,7 @@ env:
 jobs:
   build-and-push:
     runs-on: self-hosted
-    environment: ${{ secrets.ENVIRONMENT }}
+    environment: rpc3s
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -43,7 +43,7 @@ jobs:
 
   deploy:
     runs-on: self-hosted
-    environment: ${{ secrets.ENVIRONMENT }}
+    environment: rpc3s
     needs: build-and-push
     env:
       ENV_PROFILE: ${{ env.ENV_PROFILE }}
