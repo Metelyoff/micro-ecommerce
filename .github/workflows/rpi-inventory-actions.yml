@@ -9,7 +9,6 @@ on:
 
 env:
   IMAGE_NAME: ${{ secrets.INVENTORY_IMAGE_NAME }}
-  ENV_PROFILE: ${{ secrets.ENV_PROFILE }}
 
 jobs:
   build-and-push:
@@ -46,7 +45,7 @@ jobs:
     environment: rpc3s
     needs: build-and-push
     env:
-      ENV_PROFILE: ${{ env.ENV_PROFILE }}
+      ENV_PROFILE: ${{ secrets.ENV_PROFILE }}
       DOMAIN: ${{ secrets.DOMAIN }}
       INVENTORY_POSTGRES_USER: ${{ secrets.INVENTORY_POSTGRES_USER }}
       INVENTORY_POSTGRES_PASSWORD: ${{ secrets.INVENTORY_POSTGRES_PASSWORD }}
