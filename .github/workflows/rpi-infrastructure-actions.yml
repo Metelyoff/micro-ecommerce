@@ -22,7 +22,6 @@ on:
 
 env:
   IMAGE_NAME: ${{ secrets.INFRASTRUCTURE_IMAGE_NAME }}
-  ENV_PROFILE: ${{ secrets.ENV_PROFILE }}
 
 jobs:
   build-and-push:
@@ -77,7 +76,7 @@ jobs:
     environment: rpc3s
     needs: build-and-push
     env:
-      ENV_PROFILE: ${{ env.ENV_PROFILE }}
+      ENV_PROFILE: ${{ secrets.ENV_PROFILE }}
       DOMAIN: ${{ secrets.DOMAIN }}
       CLOUDFLARE_TUNNEL_TOKEN: ${{ secrets.CLOUDFLARE_TUNNEL_TOKEN }}
       ORDER_POSTGRES_USER: ${{ secrets.ORDER_POSTGRES_USER }}
