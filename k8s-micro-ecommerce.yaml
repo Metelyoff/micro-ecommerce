@@ -240,6 +240,17 @@ data:
     \c postgres;
     DROP DATABASE IF EXISTS inventory_service_db;
     CREATE DATABASE inventory_service_db;
+    CREATE ROLE ${INVENTORY_POSTGRES_USER} WITH
+        PASSWORD '${INVENTORY_POSTGRES_PASSWORD}'
+        NOSUPERUSER
+        NOCREATEDB
+        NOCREATEROLE
+        NOINHERIT
+        LOGIN
+        NOREPLICATION
+        NOBYPASSRLS
+        CONNECTION LIMIT -1;
+    GRANT CREATE,USAGE ON SCHEMA public TO ${INVENTORY_POSTGRES_USER};
     \c inventory_service_db;
 ---
 apiVersion: v1
@@ -839,6 +850,9 @@ spec:
             - /bin/sh
             - -c
             - until nc -z payment-service-db 5432; do echo "Waiting for Postgres..."; sleep 2; done
+        - name: wait-for-kafka
+          image: busybox
+          command: [ 'sh', '-c', 'until nc -z kafka 29092; do echo "Waiting for Kafka..."; sleep 2; done' ]
       containers:
         - name: payment-service
           image: ${IMAGE_NAME}:payment-service
@@ -910,12 +924,21 @@ spec:
             - /bin/sh
             - -c
             - until nc -z inventory-service-db 5432; do echo "Waiting for Postgres..."; sleep 2; done
+        - name: wait-for-kafka
+          image: busybox
+          command: [ 'sh', '-c', 'until nc -z kafka 29092; do echo "Waiting for Kafka..."; sleep 2; done' ]
       containers:
         - name: inventory-service
           image: ${IMAGE_NAME}:inventory-service
           ports:
-            - containerPort: 8080
+            - containerPort: 80
           env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "${ENV_PROFILE}"
+            - name: SERVER_PORT
+              value: "80"
+            - name: ALLOWED_ORIGINS
+              value: "https://${DOMAIN}"
             - name: DATABASE_URL
               value: jdbc:postgresql://inventory-service-db:5432/inventory_service_db
             - name: DATABASE_USERNAME
@@ -931,7 +954,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /actuator/health
-              port: 8080
+              port: 80
             initialDelaySeconds: 5
             periodSeconds: 5
             failureThreshold: 10
@@ -950,8 +973,8 @@ spec:
     app: inventory-service
   ports:
     - protocol: TCP
-      port: 8084
-      targetPort: 8080
+      port: 80
+      targetPort: 80
       name: http
   type: ClusterIP
 ---
@@ -979,6 +1002,9 @@ spec:
             - /bin/sh
             - -c
             - until nc -z order-service-db 5432; do echo "Waiting for Postgres..."; sleep 2; done
+        - name: wait-for-kafka
+          image: busybox
+          command: [ 'sh', '-c', 'until nc -z kafka 29092; do echo "Waiting for Kafka..."; sleep 2; done' ]
       containers:
         - name: order-service
           image: ${IMAGE_NAME}:order-service
@@ -1061,14 +1087,10 @@ spec:
           ports:
             - containerPort: 80
           env:
-            - name: REACT_APP_PRODUCTS_API_URL
-              value: "https://${DOMAIN}/api"
-            - name: REACT_APP_ORDERS_API_URL
-              value: "https://${DOMAIN}/api"
-            - name: REACT_APP_PAYMENTS_API_URL
+            - name: API_URL
               value: "https://${DOMAIN}/api"
             - name: BACKEND_PRODUCTS_API_URL
-              value: http://inventory-service:8084
+              value: http://inventory-service
             - name: BACKEND_ORDERS_API_URL
               value: http://order-service:8086
             - name: BACKEND_PAYMENTS_API_URL

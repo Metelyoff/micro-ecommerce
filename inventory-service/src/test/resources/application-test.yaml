@@ -1,0 +1,14 @@
+spring:
+  application:
+    outbox:
+      listener:
+        topics: order-service.public.outbox_events,payment-service.public.outbox_events
+    cors:
+      allowed-origins: "https://test.com"
+    security:
+      csrf: false
+      cors: false
+  jpa:
+    show-sql: false
+  flyway:
+    enabled: true

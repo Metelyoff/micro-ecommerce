@@ -1,0 +1,19 @@
+spring:
+  application:
+    outbox:
+      listener:
+        topics: ${OUTBOX_TOPICS}
+    cors:
+      allowed-origins: ${ALLOWED_ORIGINS}
+    security:
+      csrf: false
+      cors: true
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+  kafka:
+    bootstrap-servers: ${KAFKA_URI}
+
+server:
+  port: ${SERVER_PORT}

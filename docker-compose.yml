@@ -37,13 +37,6 @@ volumes:
 
 services:
 
-# TODO: build and publish outbox dependency to the github maven repository
-#  outbox:
-#    build:
-#      context: ./outbox
-#    container_name: outbox
-#    restart: no
-
   order-service-db:
     build:
       context: ./order-service-db
@@ -356,9 +349,7 @@ services:
     ports:
       - "80:80"
     environment:
-      - REACT_APP_PRODUCTS_API_URL=http://localhost/api
-      - REACT_APP_ORDERS_API_URL=http://localhost/api
-      - REACT_APP_PAYMENTS_API_URL=http://localhost/api
+      - API_URL=http://localhost/api
       - BACKEND_PRODUCTS_API_URL=http://inventory-service:8080
       - BACKEND_ORDERS_API_URL=http://order-service:8080
       - BACKEND_PAYMENTS_API_URL=http://payment-service:8080

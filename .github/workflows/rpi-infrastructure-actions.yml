@@ -1,0 +1,108 @@
+name: Deploy infrastructure
+
+on:
+  push:
+    branches: [main,k8s]
+    paths:
+      - 'inventory-service/**'
+      - 'order-service/**'
+      - 'payment-service/**'
+      - 'webapp/**'
+      - '.github/workflows/rpi-infrastructure-actions.yml'
+  workflow_dispatch:
+    inputs:
+      triggerBuild:
+        description: 'Build and push'
+        required: true
+        default: 'false'
+      triggerDeploy:
+        description: 'Deploy'
+        required: true
+        default: 'false'
+
+env:
+  IMAGE_NAME: ${{ secrets.INFRASTRUCTURE_IMAGE_NAME }}
+  ENV_PROFILE: ${{ secrets.ENV_PROFILE }}
+
+jobs:
+  build-and-push:
+    if: ${{ github.event.inputs.triggerBuild == 'true' }}
+    runs-on: self-hosted
+    environment: ${{ secrets.ENVIRONMENT }}
+    strategy:
+      matrix:
+        service: [ inventory-service, order-service, payment-service, webapp ]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Restore Docker cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache-${{ matrix.service }}
+          key: ${{ runner.os }}-buildx-${{ matrix.service }}-${{ hashFiles('**/Dockerfile') }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-${{ matrix.service }}-
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+          driver-opts: |
+            image=moby/buildkit:latest
+            network=host
+          buildkitd-flags: --debug
+
+      - name: Build and push Docker image (${{ matrix.service }})
+        uses: docker/build-push-action@v5
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          context: ./${{ matrix.service }}
+          file: ./${{ matrix.service }}/Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: ${{ env.IMAGE_NAME }}:${{ matrix.service }}
+          cache-from: type=local,src=/tmp/.buildx-cache-${{ matrix.service }}
+          cache-to: type=local,dest=/tmp/.buildx-cache-${{ matrix.service }},mode=max
+
+  deploy:
+    if: ${{ github.event.inputs.triggerDeploy == 'true' }}
+    runs-on: self-hosted
+    environment: ${{ secrets.ENVIRONMENT }}
+    needs: build-and-push
+    env:
+      ENV_PROFILE: ${{ env.ENV_PROFILE }}
+      DOMAIN: ${{ secrets.DOMAIN }}
+      CLOUDFLARE_TUNNEL_TOKEN: ${{ secrets.CLOUDFLARE_TUNNEL_TOKEN }}
+      ORDER_POSTGRES_USER: ${{ secrets.ORDER_POSTGRES_USER }}
+      ORDER_POSTGRES_PASSWORD: ${{ secrets.ORDER_POSTGRES_PASSWORD }}
+      PAYMENT_POSTGRES_USER: ${{ secrets.PAYMENT_POSTGRES_USER }}
+      PAYMENT_POSTGRES_PASSWORD: ${{ secrets.PAYMENT_POSTGRES_PASSWORD }}
+      INVENTORY_POSTGRES_USER: ${{ secrets.INVENTORY_POSTGRES_USER }}
+      INVENTORY_POSTGRES_PASSWORD: ${{ secrets.INVENTORY_POSTGRES_PASSWORD }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 --decode > ~/.kube/config
+
+      - name: Prepare ENV variables
+        run: |
+          cp k8s-micro-ecommerce.yaml template.yaml
+          envsubst \
+            '${ENV_PROFILE} ${DOMAIN} ${IMAGE_NAME} ${ORDER_POSTGRES_USER} ${ORDER_POSTGRES_PASSWORD} ${PAYMENT_POSTGRES_USER} ${PAYMENT_POSTGRES_PASSWORD} ${INVENTORY_POSTGRES_USER} ${INVENTORY_POSTGRES_PASSWORD} ${CLOUDFLARE_TUNNEL_TOKEN}' \
+            < template.yaml > k8s-micro-ecommerce.yaml
+
+      - name: Apply manifest
+        run: |
+          kubectl apply -f k8s-micro-ecommerce.yaml --kubeconfig ~/.kube/config
+

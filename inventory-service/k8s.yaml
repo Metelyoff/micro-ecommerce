@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-service
+  namespace: ecommerce
+  labels:
+    app: inventory-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: inventory-service
+  template:
+    metadata:
+      labels:
+        app: inventory-service
+    spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:latest
+          command:
+            - /bin/sh
+            - -c
+            - until nc -z inventory-service-db 5432; do echo "Waiting for Postgres..."; sleep 2; done
+        - name: wait-for-kafka
+          image: busybox
+          command: [ 'sh', '-c', 'until nc -z kafka 29092; do echo "Waiting for Kafka..."; sleep 2; done' ]
+      containers:
+        - name: inventory-service
+          image: ${IMAGE_NAME}
+          ports:
+            - containerPort: 80
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "${ENV_PROFILE}"
+            - name: SERVER_PORT
+              value: "80"
+            - name: ALLOWED_ORIGINS
+              value: "https://${DOMAIN}"
+            - name: DATABASE_URL
+              value: jdbc:postgresql://inventory-service-db:5432/inventory_service_db
+            - name: DATABASE_USERNAME
+              value: "${INVENTORY_POSTGRES_USER}"
+            - name: DATABASE_PASSWORD
+              value: "${INVENTORY_POSTGRES_PASSWORD}"
+            - name: KAFKA_URI
+              value: kafka:29092
+            - name: DEBEZIUM_DESTINATION
+              value: inventory-service.public.outbox_events
+            - name: OUTBOX_TOPICS
+              value: order-service.public.outbox_events,payment-service.public.outbox_events
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 10
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+  namespace: ecommerce
+spec:
+  selector:
+    app: inventory-service
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      name: http
+  type: ClusterIP
