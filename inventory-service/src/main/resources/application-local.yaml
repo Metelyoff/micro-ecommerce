@@ -27,6 +27,7 @@ server:
 logging:
   level:
     com.ecommerce.inventory: debug
+    org.flywaydb: debug
     org.hibernate.SQL: debug
     org.hibernate.stat: debug
     org.hibernate.cache: debug

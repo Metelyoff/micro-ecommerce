@@ -40,7 +40,7 @@ dependencies {
 
 	// Package info - https://jitpack.io/#Metelyoff/outbox/1.0.0
 	// Source code - https://github.com/Metelyoff/outbox
-	implementation("com.github.Metelyoff:outbox:1.0.8")
+	implementation("com.github.Metelyoff:outbox:main-SNAPSHOT")
 
 	// Package info - https://jitpack.io/#Metelyoff/ecommerce-common-persistance/1.0.0
 	// Source code - https://github.com/Metelyoff/ecommerce-common-persistance

@@ -40,9 +40,9 @@ spec:
             - name: DATABASE_URL
               value: jdbc:postgresql://inventory-service-db:5432/inventory_service_db
             - name: DATABASE_USERNAME
-              value: "${INVENTORY_POSTGRES_USER}"
+              value: "${INVENTORY_SERVICE_POSTGRES_USER}"
             - name: DATABASE_PASSWORD
-              value: "${INVENTORY_POSTGRES_PASSWORD}"
+              value: "${INVENTORY_SERVICE_POSTGRES_PASSWORD}"
             - name: KAFKA_URI
               value: kafka:29092
             - name: DEBEZIUM_DESTINATION

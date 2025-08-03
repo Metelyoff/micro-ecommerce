@@ -2,21 +2,69 @@ name: Deploy inventory service
 
 on:
   push:
-    branches: [k8s,main]
+    branches: [k8s, main]
     paths:
       - 'inventory-service/**'
       - '.github/workflows/rpi-inventory-actions.yml'
 
 env:
   IMAGE_NAME: ${{ secrets.INVENTORY_IMAGE_NAME }}
+  DOCKER_CONTEXT_DIR: docker-context
 
 jobs:
-  build-and-push:
+  test:
     runs-on: self-hosted
     environment: rpc3s
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Grant Gradle wrapper permissions
+        run: chmod +x inventory-service/gradlew
+
+      - name: Run tests with reports
+        working-directory: inventory-service
+        run: ./gradlew clean test --no-daemon
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: inventory-service/build/reports/tests/test
+
+  build-and-push:
+    runs-on: self-hosted
+    environment: rpc3s
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Grant Gradle wrapper permissions
+        run: chmod +x inventory-service/gradlew
+
+      - name: Build JAR with Gradle
+        working-directory: inventory-service
+        run: ./gradlew bootJar --no-daemon
+
+      - name: Prepare Docker context
+        run: |
+          mkdir -p $DOCKER_CONTEXT_DIR
+          cp inventory-service/build/libs/*.jar $DOCKER_CONTEXT_DIR/app.jar
+          cp inventory-service/Dockerfile $DOCKER_CONTEXT_DIR/Dockerfile
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -27,17 +75,20 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push Docker image
+      - name: Configure Docker disk cache
+        run: mkdir -p /tmp/.buildx-cache
+
+      - name: Build and push Docker image (multi-arch)
         uses: docker/build-push-action@v5
         with:
-          context: ./inventory-service
-          file: ./inventory-service/Dockerfile
-          platforms: linux/arm64
+          context: ${{ env.DOCKER_CONTEXT_DIR }}
+          file: ${{ env.DOCKER_CONTEXT_DIR }}/Dockerfile
+          platforms: linux/amd64,linux/arm64
           pull: true
           push: true
           tags: ${{ env.IMAGE_NAME }}
-          cache-from: type=gha,scope=shared-cache
-          cache-to: type=gha,mode=max,scope=shared-cache
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
 
   deploy:
     runs-on: self-hosted
@@ -57,13 +108,12 @@ jobs:
           mkdir -p ~/.kube
           echo "${{ secrets.KUBE_CONFIG }}" | base64 --decode > ~/.kube/config
 
-      - name: Prepare ENV variables
+      - name: Prepare k8s manifest
         run: |
           cp inventory-service/k8s.yaml template.yaml
           envsubst \
             '${ENV_PROFILE} ${IMAGE_NAME} ${DOMAIN} ${INVENTORY_POSTGRES_USER} ${INVENTORY_POSTGRES_PASSWORD}' \
             < template.yaml > inventory-service/k8s.yaml
 
-      - name: Apply manifest
-        run: |
-          kubectl apply -f inventory-service/k8s.yaml --kubeconfig ~/.kube/config
+      - name: Deploy to k8s
+        run: kubectl apply -f inventory-service/k8s.yaml --kubeconfig ~/.kube/config
