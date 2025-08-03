@@ -101,9 +101,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Drop docker image
-        run: |
-          crictl rmi docker.io/metelyoff/micro-ecommerce:${{ env.IMAGE_NAME }}
+#      - name: Drop docker image
+#        run: |
+#          crictl rmi docker.io/metelyoff/micro-ecommerce:${{ env.IMAGE_NAME }}
 
       - name: Set up kubeconfig
         run: |
