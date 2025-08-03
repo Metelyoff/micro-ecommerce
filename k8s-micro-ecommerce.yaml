@@ -1128,7 +1128,7 @@ spec:
             - |
               until nc -z order-service 8086 &&
                     nc -z payment-service 8085 &&
-                    nc -z inventory-service 8084;
+                    nc -z inventory-service 80;
               do
                 echo "Waiting for services...";
                 sleep 5;
@@ -1272,7 +1272,7 @@ data:
     scrape_configs:
       - job_name: 'kubernetes'
         static_configs:
-          - targets: [ 'order-service:8086', 'payment-service:8085', 'inventory-service:8084' ]
+          - targets: [ 'order-service:8086', 'payment-service:8085', 'inventory.ecommerce.svc.cluster.local:80' ]
 ---
 apiVersion: apps/v1
 kind: Deployment

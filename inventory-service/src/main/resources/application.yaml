@@ -62,6 +62,8 @@ spring:
   mvc:
     log-request-details: off
   kafka:
+    listener:
+      ack-mode: manual
     bootstrap-servers:
     consumer:
       group-id: inventory-group
