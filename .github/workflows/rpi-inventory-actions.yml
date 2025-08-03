@@ -96,8 +96,8 @@ jobs:
     env:
       ENV_PROFILE: ${{ secrets.ENV_PROFILE }}
       DOMAIN: ${{ secrets.DOMAIN }}
-      INVENTORY_POSTGRES_USER: ${{ secrets.INVENTORY_POSTGRES_USER }}
-      INVENTORY_POSTGRES_PASSWORD: ${{ secrets.INVENTORY_POSTGRES_PASSWORD }}
+      INVENTORY_SERVICE_POSTGRES_USER: ${{ secrets.INVENTORY_SERVICE_POSTGRES_USER }}
+      INVENTORY_SERVICE_POSTGRES_PASSWORD: ${{ secrets.INVENTORY_SERVICE_POSTGRES_PASSWORD }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -111,7 +111,7 @@ jobs:
         run: |
           cp inventory-service/k8s.yaml template.yaml
           envsubst \
-            '${ENV_PROFILE} ${IMAGE_NAME} ${DOMAIN} ${INVENTORY_POSTGRES_USER} ${INVENTORY_POSTGRES_PASSWORD}' \
+            '${ENV_PROFILE} ${IMAGE_NAME} ${DOMAIN} ${INVENTORY_SERVICE_POSTGRES_USER} ${INVENTORY_SERVICE_POSTGRES_PASSWORD}' \
             < template.yaml > inventory-service/k8s.yaml
 
       - name: Deploy to k8s
