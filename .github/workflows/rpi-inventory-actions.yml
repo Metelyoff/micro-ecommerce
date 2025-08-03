@@ -74,8 +74,8 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Configure Docker disk cache
-        run: mkdir -p /tmp/.buildx-cache
+#      - name: Configure Docker disk cache
+#        run: mkdir -p /tmp/.buildx-cache
 
       - name: Build and push Docker image (multi-arch)
         uses: docker/build-push-action@v5
@@ -83,11 +83,10 @@ jobs:
           context: ${{ env.DOCKER_CONTEXT_DIR }}
           file: ${{ env.DOCKER_CONTEXT_DIR }}/Dockerfile
           platforms: linux/amd64,linux/arm64
-          pull: true
           push: true
           tags: ${{ env.IMAGE_NAME }}
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
+#          cache-from: type=local,src=/tmp/.buildx-cache
+#          cache-to: type=local,dest=/tmp/.buildx-cache
 
   deploy:
     runs-on: self-hosted
@@ -101,6 +100,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Drop docker image
+        run: |
+          crictl rmi docker.io/metelyoff/micro-ecommerce:${{ env.IMAGE_NAME }}
 
       - name: Set up kubeconfig
         run: |
