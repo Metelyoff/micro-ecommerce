@@ -1,10 +1,6 @@
 FROM amazoncorretto:17.0.14-alpine
 WORKDIR /app
 COPY app.jar /app/app.jar
-
-ENV ENV_PROFILE=local
-ENV SERVER_PORT=8080
-
 ENTRYPOINT ["java", "-Dspring.profiles.active=${ENV_PROFILE}", "-Dserver.port=${SERVER_PORT}", "-jar", "/app/app.jar"]
 
 # Build and push commands
