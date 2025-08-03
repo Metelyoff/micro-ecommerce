@@ -113,6 +113,7 @@ jobs:
           envsubst \
             '${ENV_PROFILE} ${IMAGE_NAME} ${DOMAIN} ${INVENTORY_SERVICE_POSTGRES_USER} ${INVENTORY_SERVICE_POSTGRES_PASSWORD}' \
             < template.yaml > inventory-service/k8s.yaml
+          cat inventory-service/k8s.yaml
 
       - name: Deploy to k8s
         run: kubectl apply -f inventory-service/k8s.yaml --kubeconfig ~/.kube/config
