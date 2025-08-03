@@ -33,7 +33,6 @@ jobs:
         run: ./gradlew clean test --no-daemon
 
       - name: Upload test reports
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
