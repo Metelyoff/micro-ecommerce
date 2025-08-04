@@ -33,15 +33,15 @@ jobs:
       - name: Grant Gradle wrapper permissions
         run: chmod +x inventory-service/gradlew
 
-      - name: Restore Gradle wrapper cache
+      - name: Restore Gradle cache
         uses: actions/cache@v4
         with:
           path: |
-            ~/.gradle/caches
+            ~/.gradle/caches/modules-2/files-2.1/
             ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+          key: gradle-${{ runner.os }}-${{ github.ref_name }}
           restore-keys: |
-            gradle-${{ runner.os }}-${{ github.ref_name }}-
+            gradle-${{ runner.os }}-
 
       - name: Verify Docker socket is available
         run: |
@@ -52,9 +52,9 @@ jobs:
             echo "Docker is running. Proceeding with tests."
           fi
 
-      - name: Run tests with reports
+      - name: Run tests with reports (without clean)
         working-directory: inventory-service
-        run: ./gradlew clean test --no-daemon
+        run: ./gradlew test --no-daemon
 
       - name: Upload test reports
         uses: actions/upload-artifact@v4
@@ -73,6 +73,7 @@ jobs:
     runs-on: self-hosted
     environment: rpc3s
     needs: test
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -86,15 +87,15 @@ jobs:
       - name: Grant Gradle wrapper permissions
         run: chmod +x inventory-service/gradlew
 
-      - name: Restore Gradle wrapper cache
+      - name: Restore Gradle cache
         uses: actions/cache@v4
         with:
           path: |
-            ~/.gradle/caches
+            ~/.gradle/caches/modules-2/files-2.1/
             ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+          key: gradle-${{ runner.os }}-${{ github.ref_name }}
           restore-keys: |
-            gradle-${{ runner.os }}-${{ github.ref_name }}-
+            gradle-${{ runner.os }}-
 
       - name: Build JAR with Gradle
         working-directory: inventory-service
@@ -116,9 +117,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.docker-cache/.buildx-cache
-          key: docker-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+          key: docker-${{ runner.os }}-${{ github.ref_name }}
           restore-keys: |
-            docker-${{ runner.os }}-${{ github.ref_name }}-
+            docker-${{ runner.os }}-
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -151,6 +152,7 @@ jobs:
       DOMAIN: ${{ secrets.DOMAIN }}
       INVENTORY_SERVICE_POSTGRES_USER: ${{ secrets.INVENTORY_SERVICE_POSTGRES_USER }}
       INVENTORY_SERVICE_POSTGRES_PASSWORD: ${{ secrets.INVENTORY_SERVICE_POSTGRES_PASSWORD }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -168,7 +170,9 @@ jobs:
             < template.yaml > inventory-service/k8s.yaml
 
       - name: Deploy to k8s
-        run: kubectl apply -f inventory-service/k8s.yaml --kubeconfig ~/.kube/config
+        run: |
+          kubectl apply -f inventory-service/k8s.yaml --kubeconfig ~/.kube/config
+          kubectl rollout restart deployment/inventory-service --namespace=ecommerce --kubeconfig ~/.kube/config
 
       - name: Wait for rollout to complete
         run: kubectl rollout status deployment/inventory-service --namespace=ecommerce --timeout=120s --kubeconfig ~/.kube/config
