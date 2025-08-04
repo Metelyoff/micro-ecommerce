@@ -40,6 +40,15 @@ jobs:
           restore-keys: |
             gradle-${{ runner.os }}-${{ github.ref_name }}-
 
+      - name: Verify Docker socket is available
+        run: |
+          if ! docker info > /dev/null 2>&1; then
+            echo "Docker is not available or not running. Cannot proceed with Testcontainers."
+            exit 1
+          else
+            echo "Docker is running. Proceeding with tests."
+          fi
+
       - name: Run tests with reports
         working-directory: inventory-service
         run: ./gradlew clean test --no-daemon
