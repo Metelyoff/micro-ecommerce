@@ -251,18 +251,7 @@ data:
     CREATE ROLE ${INVENTORY_SERVICE_POSTGRES_USER} WITH
         PASSWORD '${INVENTORY_SERVICE_POSTGRES_PASSWORD}'
         LOGIN
-        NOSUPERUSER
-        NOCREATEDB
-        NOCREATEROLE
-        NOINHERIT
-        NOREPLICATION
-        NOBYPASSRLS
-        CONNECTION LIMIT -1;
-    
-    CREATE ROLE ${INVENTORY_DEBEZIUM_POSTGRES_USER} WITH
-        PASSWORD '${INVENTORY_DEBEZIUM_POSTGRES_PASSWORD}'
         REPLICATION
-        LOGIN
         NOSUPERUSER
         NOCREATEDB
         NOCREATEROLE
@@ -271,34 +260,9 @@ data:
         CONNECTION LIMIT -1;
     
     GRANT CONNECT ON DATABASE inventory_service_db TO ${INVENTORY_SERVICE_POSTGRES_USER};
-    GRANT CONNECT ON DATABASE inventory_service_db TO ${INVENTORY_DEBEZIUM_POSTGRES_USER};
     
     \c inventory_service_db;
-    
     GRANT CREATE, USAGE ON SCHEMA public TO ${INVENTORY_SERVICE_POSTGRES_USER};
-    GRANT USAGE ON SCHEMA public TO ${INVENTORY_DEBEZIUM_POSTGRES_USER};
-    
-    CREATE TABLE IF NOT EXISTS outbox_events
-    (
-      id                  UUID PRIMARY KEY,
-      context_id          VARCHAR(255) NOT NULL,
-      process_name        VARCHAR(255) NOT NULL,
-      event_name          VARCHAR(255) NOT NULL,
-      payload             TEXT         NULL,
-      status              VARCHAR(255) NOT NULL,
-      status_message      VARCHAR(255) NULL,
-      processed_timestamp BIGINT       NULL,
-      created_at          TIMESTAMP    NOT NULL DEFAULT NOW(),
-      version             INTEGER      NULL
-    );
-    
-    CREATE INDEX idx_context_id ON outbox_events(context_id);
-    CREATE INDEX idx_event_name ON outbox_events(event_name);
-    CREATE INDEX idx_process_name ON outbox_events(process_name);
-    CREATE INDEX idx_status ON outbox_events(status);
-    
-    CREATE PUBLICATION inventory_pub FOR TABLE outbox_events;
-    GRANT SELECT ON TABLE outbox_events TO ${INVENTORY_DEBEZIUM_POSTGRES_USER};
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -768,8 +732,8 @@ data:
         "tasks.max": "1",
         "database.hostname": "inventory-service-db",
         "database.port": "5432",
-        "database.user": "${INVENTORY_POSTGRES_USER}",
-        "database.password": "${INVENTORY_POSTGRES_PASSWORD}",
+        "database.user": "${INVENTORY_SERVICE_POSTGRES_USER}",
+        "database.password": "${INVENTORY_SERVICE_POSTGRES_PASSWORD}",
         "database.dbname": "inventory_service_db",
         "database.server.name": "inventory_service",
         "plugin.name": "pgoutput",
@@ -784,9 +748,7 @@ data:
         "transforms": "unwrap",
         "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
         "transforms.unwrap.drop.tombstones": "true",
-        "table.include.list": "public.outbox_events",
-        "publication.autocreate.mode": "disabled",
-        "publication.name": "inventory_pub"
+        "table.include.list": "public.outbox_events"
       }
     }
   order-service-connector.json: |
