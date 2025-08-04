@@ -16,6 +16,10 @@ jobs:
   test:
     runs-on: self-hosted
     environment: rpc3s
+    permissions:
+      contents: read
+      checks: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

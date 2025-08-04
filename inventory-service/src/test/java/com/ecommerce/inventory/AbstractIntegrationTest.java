@@ -8,7 +8,6 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.kafka.ConfluentKafkaContainer;
 import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -25,7 +24,8 @@ public abstract class AbstractIntegrationTest {
             .withUsername("test")
             .withPassword("test")
             .withExposedPorts(5432)
-            .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(2)));
+            .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(2)))
+            .withReuse(true);;
 
     private static final KafkaContainer KAFKA = new KafkaContainer(DockerImageName
             .parse("bitnami/kafka")
@@ -39,7 +39,8 @@ public abstract class AbstractIntegrationTest {
             .withEnv("KAFKA_CFG_CONTROLLER_LISTENER_NAMES", "CONTROLLER")
             .withEnv("ALLOW_PLAINTEXT_LISTENER", "yes")
             .withExposedPorts(9092)
-            .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(2)));
+            .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(2)))
+            .withReuse(true);
 
     static {
         POSTGRES.start();
