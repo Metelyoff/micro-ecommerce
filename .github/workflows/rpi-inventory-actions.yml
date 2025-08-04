@@ -35,7 +35,6 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-            inventory-service/.gradle
           key: gradle-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
           restore-keys: |
             gradle-${{ runner.os }}-${{ github.ref_name }}-
@@ -89,7 +88,6 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-            inventory-service/.gradle
           key: gradle-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
           restore-keys: |
             gradle-${{ runner.os }}-${{ github.ref_name }}-
@@ -113,7 +111,7 @@ jobs:
       - name: Restore Docker layer cache
         uses: actions/cache@v4
         with:
-          path: /tmp/.buildx-cache
+          path: ~/.docker-cache/.buildx-cache
           key: docker-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
           restore-keys: |
             docker-${{ runner.os }}-${{ github.ref_name }}-
@@ -127,9 +125,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Configure Docker disk cache
-        run: mkdir -p /tmp/.buildx-cache
-
       - name: Build and push Docker image (multi-arch)
         uses: docker/build-push-action@v5
         with:
@@ -140,8 +135,8 @@ jobs:
           tags: |
             ${{ env.INVENTORY_IMAGE_NAME }}:${{ env.INVENTORY_IMAGE_TAG }}
             ${{ env.INVENTORY_IMAGE_NAME }}:${{ github.ref_name }}
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
+          cache-from: type=local,src=~/.docker-cache/.buildx-cache
+          cache-to: type=local,dest=~/.docker-cache/.buildx-cache
 
   deploy:
     runs-on: self-hosted
