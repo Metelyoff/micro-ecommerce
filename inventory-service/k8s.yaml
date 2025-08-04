@@ -6,7 +6,7 @@ metadata:
   labels:
     app: inventory-service
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: inventory-service
@@ -57,10 +57,10 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 5
             failureThreshold: 10
-          resources:
-            limits:
-              memory: "512Mi"
-              cpu: "500m"
+#          resources:
+#            limits:
+#              memory: "512Mi"
+#              cpu: "500m"
 ---
 apiVersion: v1
 kind: Service
