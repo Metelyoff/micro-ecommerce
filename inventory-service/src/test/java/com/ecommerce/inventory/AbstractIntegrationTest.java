@@ -9,6 +9,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.kafka.ConfluentKafkaContainer;
+import org.testcontainers.kafka.KafkaContainer;
+import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
 
@@ -23,9 +25,21 @@ public abstract class AbstractIntegrationTest {
             .withUsername("test")
             .withPassword("test")
             .withExposedPorts(5432)
-            .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(3)));
+            .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(2)));
 
-    private static final ConfluentKafkaContainer KAFKA = new ConfluentKafkaContainer("confluentinc/cp-kafka");
+    private static final KafkaContainer KAFKA = new KafkaContainer(DockerImageName
+            .parse("bitnami/kafka")
+            .asCompatibleSubstituteFor("apache/kafka"))
+            .withEnv("KAFKA_KRAFT_MODE", "true")
+            .withEnv("KAFKA_CFG_NODE_ID", "0")
+            .withEnv("KAFKA_CFG_PROCESS_ROLES", "broker,controller")
+            .withEnv("KAFKA_CFG_CONTROLLER_QUORUM_VOTERS", "0@localhost:9093")
+            .withEnv("KAFKA_CFG_LISTENERS", "PLAINTEXT://:9092,CONTROLLER://:9093")
+            .withEnv("KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP", "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT")
+            .withEnv("KAFKA_CFG_CONTROLLER_LISTENER_NAMES", "CONTROLLER")
+            .withEnv("ALLOW_PLAINTEXT_LISTENER", "yes")
+            .withExposedPorts(9092)
+            .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(2)));
 
     static {
         POSTGRES.start();
