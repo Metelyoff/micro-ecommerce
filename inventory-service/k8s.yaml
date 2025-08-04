@@ -27,7 +27,7 @@ spec:
           command: [ 'sh', '-c', 'until nc -z kafka 29092; do echo "Waiting for Kafka..."; sleep 2; done' ]
       containers:
         - name: inventory-service
-          image: ${INVENTORY_IMAGE_NAME}
+          image: ${INVENTORY_IMAGE_NAME}:${INVENTORY_IMAGE_TAG}
           imagePullPolicy: Always
           ports:
             - containerPort: 80
