@@ -47,7 +47,7 @@ public class ItemReservationServiceImpl implements ItemReservationService {
         this.maxReservedItems = maxReservedItems;
     }
 
-    @OutboxTransaction
+    @OutboxTransaction(successEvent = "ItemReservationService.reserve")
     @Override
     public void reserve(OutboxContext orderId, Collection<ReservedItemDTO> reservedItems) {
         log.debug("Reserve Items from Order Id: {}. Items to reserve: [{}]", orderId, reservedItems);
@@ -135,7 +135,7 @@ public class ItemReservationServiceImpl implements ItemReservationService {
         }
     }
 
-    @OutboxTransaction
+    @OutboxTransaction(successEvent = "ItemReservationService.cancelReservation")
     @Override
     public void cancelReservation(OutboxContext orderId) {
         log.debug("Cancel Reservation for Order Id: {}", orderId);
