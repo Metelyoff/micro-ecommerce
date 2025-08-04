@@ -36,7 +36,7 @@ public class ReservedItemEntity extends AuditEntity {
     private ReservedItemStatus status;
 
     @Column(name = "reserved_at")
-    private Instant reservedAt = Instant.now();
+    private Instant reservedAt;
 
     @Override
     public final boolean equals(Object o) {
