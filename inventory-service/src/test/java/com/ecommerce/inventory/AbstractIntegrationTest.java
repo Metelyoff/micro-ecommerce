@@ -1,13 +1,11 @@
 package com.ecommerce.inventory;
 
 import org.junit.jupiter.api.TestInstance;
-import org.slf4j.LoggerFactory;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.kafka.ConfluentKafkaContainer;
 
@@ -23,8 +21,7 @@ public abstract class AbstractIntegrationTest {
             .withPassword("test")
             .withReuse(true);
 
-    private static final ConfluentKafkaContainer KAFKA = new ConfluentKafkaContainer("confluentinc/cp-kafka")
-            .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("Kafka")))
+    private static final ConfluentKafkaContainer KAFKA = new ConfluentKafkaContainer("bitnami/kafka")
             .withReuse(true);
 
     static {
