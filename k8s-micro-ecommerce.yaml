@@ -748,7 +748,9 @@ data:
         "transforms": "unwrap",
         "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
         "transforms.unwrap.drop.tombstones": "true",
-        "table.include.list": "public.outbox_events"
+        "table.include.list": "public.outbox_events",
+        "publication.name": "dbz_publication",
+        "publication.autocreate.mode": "disabled"
       }
     }
   order-service-connector.json: |
