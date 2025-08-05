@@ -52,3 +52,5 @@ CREATE INDEX IF NOT EXISTS idx_context_id ON outbox_events(context_id);
 CREATE INDEX IF NOT EXISTS idx_event_name ON outbox_events(event_name);
 CREATE INDEX IF NOT EXISTS idx_process_name ON outbox_events(process_name);
 CREATE INDEX IF NOT EXISTS idx_status ON outbox_events(status);
+
+CREATE PUBLICATION dbz_publication FOR TABLE outbox_events;

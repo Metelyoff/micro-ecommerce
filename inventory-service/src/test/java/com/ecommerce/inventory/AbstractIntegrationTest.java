@@ -25,11 +25,9 @@ public abstract class AbstractIntegrationTest {
             .withPassword("test")
             .withExposedPorts(5432)
             .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(2)))
-            .withReuse(true);;
+            .withReuse(true);
 
-    private static final KafkaContainer KAFKA = new KafkaContainer(DockerImageName
-            .parse("bitnami/kafka")
-            .asCompatibleSubstituteFor("apache/kafka"))
+    private static final KafkaContainer KAFKA = new KafkaContainer(DockerImageName.parse("apache/kafka"))
             .withEnv("KAFKA_KRAFT_MODE", "true")
             .withEnv("KAFKA_CFG_NODE_ID", "0")
             .withEnv("KAFKA_CFG_PROCESS_ROLES", "broker,controller")
