@@ -23,14 +23,14 @@ public abstract class AbstractIntegrationTest {
             .withReuse(true);
 
     private static final KafkaContainer KAFKA = new KafkaContainer(DockerImageName.parse("apache/kafka:latest"))
-            .withEnv("KAFKA_KRAFT_MODE", "true")
-            .withEnv("KAFKA_CFG_NODE_ID", "0")
-            .withEnv("KAFKA_CFG_PROCESS_ROLES", "broker,controller")
-            .withEnv("KAFKA_CFG_CONTROLLER_QUORUM_VOTERS", "0@localhost:9093")
-            .withEnv("KAFKA_CFG_LISTENERS", "PLAINTEXT://:9092,CONTROLLER://:9093")
-            .withEnv("KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP", "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT")
-            .withEnv("KAFKA_CFG_CONTROLLER_LISTENER_NAMES", "CONTROLLER")
-            .withEnv("ALLOW_PLAINTEXT_LISTENER", "yes")
+//            .withEnv("KAFKA_KRAFT_MODE", "true")
+//            .withEnv("KAFKA_CFG_NODE_ID", "0")
+//            .withEnv("KAFKA_CFG_PROCESS_ROLES", "broker,controller")
+//            .withEnv("KAFKA_CFG_CONTROLLER_QUORUM_VOTERS", "0@localhost:9093")
+//            .withEnv("KAFKA_CFG_LISTENERS", "PLAINTEXT://:9092,CONTROLLER://:9093")
+//            .withEnv("KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP", "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT")
+//            .withEnv("KAFKA_CFG_CONTROLLER_LISTENER_NAMES", "CONTROLLER")
+//            .withEnv("ALLOW_PLAINTEXT_LISTENER", "yes")
             .withReuse(true);
 
     static {
