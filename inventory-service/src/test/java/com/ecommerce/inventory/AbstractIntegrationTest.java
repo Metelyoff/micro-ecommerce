@@ -6,13 +6,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.kafka.ConfluentKafkaContainer;
 import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
-
-import java.time.Duration;
 
 @ActiveProfiles("test")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -24,24 +20,17 @@ public abstract class AbstractIntegrationTest {
             .withDatabaseName("test-db")
             .withUsername("test")
             .withPassword("test")
-//            .withExposedPorts(5432)
-//            .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(2)))
             .withReuse(true);
 
-    private static final ConfluentKafkaContainer KAFKA = new ConfluentKafkaContainer(
-            DockerImageName.parse("confluentinc/cp-kafka:latest.arm64")
-                    .asCompatibleSubstituteFor("confluentinc/cp-kafka")
-    )
-//            .withEnv("KAFKA_KRAFT_MODE", "true")
-//            .withEnv("KAFKA_CFG_NODE_ID", "0")
-//            .withEnv("KAFKA_CFG_PROCESS_ROLES", "broker,controller")
-//            .withEnv("KAFKA_CFG_CONTROLLER_QUORUM_VOTERS", "0@localhost:9093")
-//            .withEnv("KAFKA_CFG_LISTENERS", "PLAINTEXT://:9092,CONTROLLER://:9093")
-//            .withEnv("KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP", "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT")
-//            .withEnv("KAFKA_CFG_CONTROLLER_LISTENER_NAMES", "CONTROLLER")
-//            .withEnv("ALLOW_PLAINTEXT_LISTENER", "yes")
-//            .withExposedPorts(9092)
-//            .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(2)))
+    private static final KafkaContainer KAFKA = new KafkaContainer(DockerImageName.parse("apache/kafka:latest"))
+            .withEnv("KAFKA_KRAFT_MODE", "true")
+            .withEnv("KAFKA_CFG_NODE_ID", "0")
+            .withEnv("KAFKA_CFG_PROCESS_ROLES", "broker,controller")
+            .withEnv("KAFKA_CFG_CONTROLLER_QUORUM_VOTERS", "0@localhost:9093")
+            .withEnv("KAFKA_CFG_LISTENERS", "PLAINTEXT://:9092,CONTROLLER://:9093")
+            .withEnv("KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP", "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT")
+            .withEnv("KAFKA_CFG_CONTROLLER_LISTENER_NAMES", "CONTROLLER")
+            .withEnv("ALLOW_PLAINTEXT_LISTENER", "yes")
             .withReuse(true);
 
     static {
