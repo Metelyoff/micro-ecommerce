@@ -13,13 +13,59 @@ env:
   DOCKER_CONTEXT_DIR: docker-context
 
 jobs:
-  test:
+
+  unit-test:
     runs-on: self-hosted
     environment: rpc3s
     permissions:
       contents: read
       checks: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Grant Gradle wrapper permissions
+        run: chmod +x inventory-service/gradlew
+
+      - name: Restore Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Run unit tests
+        working-directory: inventory-service
+        run: ./gradlew test --no-daemon --tests '*Test'
+
+      - name: Upload unit test reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports
+          path: inventory-service/build/reports/tests/test
+
+      - name: Publish Unit Test Results
+        uses: dorny/test-reporter@v1
+        with:
+          name: Unit Test Results
+          path: inventory-service/build/test-results/test/*.xml
+          reporter: java-junit
+
+  integration-test:
+    runs-on: self-hosted
+    environment: rpc3s
+    permissions:
+      contents: read
+      checks: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -45,34 +91,37 @@ jobs:
 
       - name: Verify Docker socket is available
         run: |
-          if ! docker info > /dev/null 2>&1; then
-            echo "Docker is not available or not running. Cannot proceed with Testcontainers."
-            exit 1
-          else
+          if docker info > /dev/null 2>&1; then
             echo "Docker is running. Proceeding with tests."
-          fi
+            echo "docker_available=true" >> $GITHUB_OUTPUT
+          else
+            echo "Docker is not available or not running. Skipping tests."
+            echo "docker_available=false" >> $GITHUB_OUTPUT
 
-      - name: Run tests with reports
+      - name: Run integration tests with 'test' profile
+        if: steps.check_docker.outputs.docker_available == 'true'
         working-directory: inventory-service
-        run: ./gradlew test --no-daemon
+        run: SPRING_PROFILES_ACTIVE=test ./gradlew test --no-daemon --tests '*IT'
 
-      - name: Upload test reports
+      - name: Upload integration test reports
+        if: steps.check_docker.outputs.docker_available == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: test-reports
+          name: integration-test-reports
           path: inventory-service/build/reports/tests/test
 
-      - name: Publish Test Results
+      - name: Publish Integration Test Results
+        if: steps.check_docker.outputs.docker_available == 'true'
         uses: dorny/test-reporter@v1
         with:
-          name: Test Results
+          name: Integration Test Results
           path: inventory-service/build/test-results/test/*.xml
           reporter: java-junit
 
   build-and-push:
     runs-on: self-hosted
     environment: rpc3s
-    needs: test
+    needs: [unit-test, integration-test]
 
     steps:
       - name: Checkout code
