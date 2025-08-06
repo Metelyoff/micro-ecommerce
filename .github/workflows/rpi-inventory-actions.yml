@@ -14,6 +14,32 @@ env:
 
 jobs:
 
+  qodana-code-quality:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      checks: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: 'Qodana Scan'
+        uses: JetBrains/qodana-action@latest
+        env:
+          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
+        with:
+          # In pr-mode: 'true' Qodana checks only changed files
+          pr-mode: false
+          use-caches: true
+          post-pr-comment: true
+          use-annotations: true
+          # Upload Qodana results (SARIF, other artifacts, logs) as an artifact to the job
+          upload-result: false
+          # quick-fixes available in Ultimate and Ultimate Plus plans
+          push-fixes: 'none'
+
   unit-test:
     runs-on: self-hosted
     environment: rpc3s
@@ -97,6 +123,7 @@ jobs:
           else
             echo "Docker is not available or not running. Skipping tests."
             echo "docker_available=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Run integration tests with 'test' profile
         if: steps.check_docker.outputs.docker_available == 'true'
