@@ -37,9 +37,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ~/.gradle/caches/modules-2/files-2.1/
+            ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ github.ref_name }}
+          key: gradle-${{ runner.os }}-${{ github.sha }}
           restore-keys: |
             gradle-${{ runner.os }}-
 
@@ -91,9 +91,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ~/.gradle/caches/modules-2/files-2.1/
+            ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ github.ref_name }}
+          key: gradle-${{ runner.os }}-${{ github.sha }}
           restore-keys: |
             gradle-${{ runner.os }}-
 
@@ -117,7 +117,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.docker-cache/.buildx-cache
-          key: docker-${{ runner.os }}-${{ github.ref_name }}
+          key: docker-${{ runner.os }}-${{ github.sha }}
           restore-keys: |
             docker-${{ runner.os }}-
 
