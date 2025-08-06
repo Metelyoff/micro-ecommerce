@@ -13,6 +13,7 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.kafka.ConfluentKafkaContainer;
+import org.testcontainers.utility.DockerImageName;
 
 @ActiveProfiles("test")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -25,7 +26,8 @@ public abstract class AbstractIntegrationTest {
             .withUsername("test")
             .withPassword("test");
 
-    private static final ConfluentKafkaContainer KAFKA = new ConfluentKafkaContainer("confluentinc/cp-kafka")
+    private static final ConfluentKafkaContainer KAFKA = new ConfluentKafkaContainer(DockerImageName.parse("confluentinc/cp-kafka")
+            .asCompatibleSubstituteFor("confluentinc/cp-kafka"))
             .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger(AbstractIntegrationTest.class)))
             .waitingFor(Wait.forLogMessage(".*Kafka startTimeMs.*", 1));
 
