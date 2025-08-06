@@ -1,4 +1,9 @@
+## Deployment status
+[![Deploy inventory service](https://github.com/Metelyoff/micro-ecommerce/actions/workflows/rpi-inventory-actions.yml/badge.svg?branch=k8s)](https://github.com/Metelyoff/micro-ecommerce/actions/workflows/rpi-inventory-actions.yml)
+
+
 # DEMO Distributed E-commerce System with Event-Driven Architecture
+
 This project is a **distributed e-commerce system** implemented using an **event-driven architecture**, featuring multiple services collaborating seamlessly to handle orders, payments, and inventory management. It is designed to demonstrate concepts such as microservices, event sourcing, change data capture (CDC), and scalability using tools like Kafka, PostgreSQL, Debezium, and more.
 
 ![Distributed E-commerce System desktop version](ecommerce.jpg)

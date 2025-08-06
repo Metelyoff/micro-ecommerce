@@ -31,14 +31,13 @@ jobs:
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
         with:
-          qodana-image: jetbrains/qodana-jvm-community:2024.1
           # In pr-mode: 'true' Qodana checks only changed files
           pr-mode: false
           use-caches: true
           post-pr-comment: true
           use-annotations: true
           # Upload Qodana results (SARIF, other artifacts, logs) as an artifact to the job
-          upload-result: false
+          upload-result: true
           # quick-fixes available in Ultimate and Ultimate Plus plans
           push-fixes: 'none'
 
@@ -82,7 +81,7 @@ jobs:
 
       - name: Run tests
         working-directory: inventory-service
-        run: ./gradlew test --no-daemon
+        run: ./gradlew clean test --no-daemon
 
       - name: Upload test reports
         uses: actions/upload-artifact@v4
@@ -127,7 +126,7 @@ jobs:
 
       - name: Build JAR with Gradle
         working-directory: inventory-service
-        run: ./gradlew bootJar -x test --no-daemon
+        run: ./gradlew clean bootJar -x test --no-daemon
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
@@ -200,7 +199,6 @@ jobs:
       - name: Deploy to k8s
         run: |
           kubectl apply -f inventory-service/k8s.yaml --kubeconfig ~/.kube/config
-          kubectl rollout restart deployment/inventory-service --namespace=ecommerce --kubeconfig ~/.kube/config
 
       - name: Wait for rollout to complete
         run: kubectl rollout status deployment/inventory-service --namespace=ecommerce --timeout=200s --kubeconfig ~/.kube/config
