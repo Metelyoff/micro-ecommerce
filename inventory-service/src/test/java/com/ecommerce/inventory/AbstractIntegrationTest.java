@@ -1,11 +1,16 @@
 package com.ecommerce.inventory;
 
+import jakarta.annotation.PreDestroy;
 import org.junit.jupiter.api.TestInstance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.kafka.ConfluentKafkaContainer;
 
@@ -18,15 +23,21 @@ public abstract class AbstractIntegrationTest {
     private static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:15.4")
             .withDatabaseName("test-db")
             .withUsername("test")
-            .withPassword("test")
-            .withReuse(true);
+            .withPassword("test");
 
-    private static final ConfluentKafkaContainer KAFKA = new ConfluentKafkaContainer("bitnami/kafka")
-            .withReuse(true);
+    private static final ConfluentKafkaContainer KAFKA = new ConfluentKafkaContainer("confluentinc/cp-kafka")
+            .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger(AbstractIntegrationTest.class)))
+            .waitingFor(Wait.forLogMessage(".*Kafka startTimeMs.*", 1));
 
     static {
         POSTGRES.start();
-        KAFKA.start();
+        try {
+            KAFKA.start();
+        } catch (Exception e) {
+            System.err.println("Kafka failed to start:");
+            System.err.println(KAFKA.getLogs());
+            throw e;
+        }
     }
 
     @DynamicPropertySource
@@ -36,6 +47,12 @@ public abstract class AbstractIntegrationTest {
         registry.add("spring.datasource.password", POSTGRES::getPassword);
         registry.add("spring.datasource.driver-class-name", POSTGRES::getDriverClassName);
         registry.add("spring.kafka.bootstrap-servers", KAFKA::getBootstrapServers);
+    }
+
+    @PreDestroy
+    void tearDown() {
+        POSTGRES.stop();
+        KAFKA.stop();
     }
 
 }
