@@ -15,7 +15,8 @@ env:
 jobs:
 
   qodana-code-quality:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
+    environment: rpc3s
     permissions:
       contents: write
       pull-requests: write
