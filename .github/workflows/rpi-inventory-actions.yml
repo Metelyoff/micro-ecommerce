@@ -201,5 +201,5 @@ jobs:
           kubectl apply -f inventory-service/k8s.yaml --kubeconfig ~/.kube/config
 
       - name: Wait for rollout to complete
-        run: kubectl rollout status deployment/inventory-service --namespace=ecommerce --timeout=200s --kubeconfig ~/.kube/config
+        run: kubectl rollout status deployment/inventory-service --namespace=ecommerce --timeout=360s --kubeconfig ~/.kube/config
 
