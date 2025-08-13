@@ -1,6 +1,7 @@
 ## Deployment status
 [![Deploy inventory service](https://github.com/Metelyoff/micro-ecommerce/actions/workflows/rpi-inventory-actions.yml/badge.svg?branch=k8s)](https://github.com/Metelyoff/micro-ecommerce/actions/workflows/rpi-inventory-actions.yml)
 
+**See the DEMO on the host:** [rpik3s.xyz](https://rpik3s.xyz)
 
 # DEMO Distributed E-commerce System with Event-Driven Architecture
 
