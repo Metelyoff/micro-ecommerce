@@ -9,6 +9,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.kafka.ConfluentKafkaContainer;
 import org.testcontainers.utility.DockerImageName;
@@ -29,6 +30,7 @@ public abstract class AbstractIntegrationTest {
             new ConfluentKafkaContainer(DockerImageName.parse("confluentinc/cp-kafka")
                     .asCompatibleSubstituteFor("confluentinc/cp-kafka"))
                     .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("Kafka")))
+                    .waitingFor(Wait.forLogMessage(".*Kafka startTimeMs.*", 1))
                     .withReuse(true);
 
     static {
