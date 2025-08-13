@@ -101,7 +101,7 @@ management:
       access: read_only
   endpoints:
     access:
-      default: none
+      default: read_only
     web:
       exposure:
         # logfile,loggers,env,configprops,threaddump,flyway - useful, but does not safe
