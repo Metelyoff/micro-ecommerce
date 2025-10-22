@@ -381,6 +381,8 @@ spec:
       labels:
         app: kafka
     spec:
+      nodeSelector:
+        node-role.kubernetes.io/worker: "true"
       containers:
         - name: kafka
           image: apache/kafka:latest
@@ -478,6 +480,8 @@ spec:
       labels:
         app: kafka-ui
     spec:
+      nodeSelector:
+        node-role.kubernetes.io/worker: "true"
       initContainers:
         - name: wait-for-kafka
           image: busybox
@@ -531,6 +535,8 @@ spec:
       labels:
         app: debezium
     spec:
+      nodeSelector:
+        node-role.kubernetes.io/worker: "true"
       initContainers:
         - name: wait-for-postgres
           image: busybox:latest
@@ -636,6 +642,8 @@ spec:
       labels:
         app: debezium-ui
     spec:
+      nodeSelector:
+        node-role.kubernetes.io/worker: "true"
       initContainers:
         - name: wait-for-debezium
           image: busybox
@@ -859,6 +867,8 @@ spec:
       labels:
         app: payment-service
     spec:
+      nodeSelector:
+        node-role.kubernetes.io/worker: "true"
       initContainers:
         - name: wait-for-postgres
           image: busybox:latest
@@ -933,6 +943,8 @@ spec:
       labels:
         app: inventory-service
     spec:
+      nodeSelector:
+        node-role.kubernetes.io/worker: "true"
       initContainers:
         - name: wait-for-postgres
           image: busybox:latest
@@ -1011,6 +1023,8 @@ spec:
       labels:
         app: order-service
     spec:
+      nodeSelector:
+        node-role.kubernetes.io/worker: "true"
       initContainers:
         - name: wait-for-postgres
           image: busybox:latest
@@ -1083,6 +1097,8 @@ spec:
       labels:
         app: web
     spec:
+      nodeSelector:
+        node-role.kubernetes.io/worker: "true"
       initContainers:
         - name: wait-for-services
           image: busybox:latest
@@ -1198,6 +1214,8 @@ spec:
       labels:
         app: cloudflared
     spec:
+      nodeSelector:
+        node-role.kubernetes.io/worker: "true"
       initContainers:
         - name: wait-for-web
           image: curlimages/curl
@@ -1257,6 +1275,8 @@ spec:
       labels:
         app: prometheus
     spec:
+      nodeSelector:
+        node-role.kubernetes.io/worker: "true"
       containers:
         - name: prometheus
           image: prom/prometheus
@@ -1301,6 +1321,8 @@ spec:
       labels:
         app: grafana
     spec:
+      nodeSelector:
+        node-role.kubernetes.io/worker: "true"
       initContainers:
         - name: wait-for-prometheus
           image: busybox
