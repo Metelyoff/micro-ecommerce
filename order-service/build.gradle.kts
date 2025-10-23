@@ -32,7 +32,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 
-	implementation("com.github.Metelyoff:outbox:1.0.3")
+	implementation("com.github.Metelyoff:outbox:77bdea9c")
 
 	compileOnly("org.projectlombok:lombok")
 	runtimeOnly("org.postgresql:postgresql")
