@@ -15,11 +15,13 @@ on:
       triggerBuild:
         description: 'Build and push'
         required: true
-        default: 'false'
+        default: false
+        type: boolean
       triggerDeploy:
         description: 'Deploy'
         required: true
-        default: 'false'
+        default: false
+        type: boolean
 
 env:
   IMAGE_NAME: ${{ secrets.INFRASTRUCTURE_IMAGE_NAME }}
