@@ -1,15 +1,6 @@
 name: Deploy infrastructure
 
 on:
-#  push:
-#    branches: [main, k8s]
-#    paths:
-#      - 'inventory-service/**'
-#      - 'order-service/**'
-#      - 'payment-service/**'
-#      - 'webapp/**'
-#      - '.github/workflows/rpi-infrastructure-actions.yml'
-
   workflow_dispatch:
     inputs:
       triggerBuild:
