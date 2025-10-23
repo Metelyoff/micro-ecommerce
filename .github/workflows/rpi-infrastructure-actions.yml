@@ -16,10 +16,12 @@ on:
         description: 'Build and push'
         required: true
         type: boolean
+        default: true
       triggerDeploy:
         description: 'Deploy'
         required: true
         type: boolean
+        default: true
 
 env:
   IMAGE_NAME: ${{ secrets.INFRASTRUCTURE_IMAGE_NAME }}
