@@ -15,6 +15,8 @@ import org.testcontainers.kafka.ConfluentKafkaContainer;
 import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import java.time.Duration;
+
 @ActiveProfiles("test")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -25,6 +27,7 @@ public abstract class AbstractIntegrationTest {
             .withDatabaseName("test-db")
             .withUsername("test")
             .withPassword("test")
+            .withStartupTimeout(Duration.ofSeconds(120))
             .withReuse(true);
 
 //    private static final ConfluentKafkaContainer KAFKA =
@@ -45,6 +48,7 @@ public abstract class AbstractIntegrationTest {
             .withEnv("ALLOW_PLAINTEXT_LISTENER", "yes")
             .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("Kafka")))
             .waitingFor(Wait.forLogMessage(".*Kafka startTimeMs.*", 1))
+            .withStartupTimeout(Duration.ofSeconds(120))
             .withReuse(true);
 
     static {
