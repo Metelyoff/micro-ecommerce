@@ -12,10 +12,9 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.kafka.ConfluentKafkaContainer;
-import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
-import java.time.Duration;
+import java.util.UUID;
 
 @ActiveProfiles("test")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -29,12 +28,20 @@ public abstract class AbstractIntegrationTest {
             .withPassword("test")
             .withReuse(true);
 
-    private static final ConfluentKafkaContainer KAFKA =
-            new ConfluentKafkaContainer(DockerImageName.parse("confluentinc/cp-kafka")
-                    .asCompatibleSubstituteFor("confluentinc/cp-kafka"))
-                    .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("Kafka")))
-                    .waitingFor(Wait.forLogMessage(".*Kafka startTimeMs.*", 1))
-                    .withReuse(true);
+  private static final ConfluentKafkaContainer KAFKA =
+      new ConfluentKafkaContainer(DockerImageName.parse("confluentinc/cp-kafka").asCompatibleSubstituteFor("confluentinc/cp-kafka"))
+          .withExposedPorts(9092, 9093)
+          .withEnv("KAFKA_NODE_ID", "1")
+          .withEnv("KAFKA_PROCESS_ROLES", "broker,controller")
+          .withEnv("KAFKA_CONTROLLER_LISTENER_NAMES", "CONTROLLER")
+          .withEnv("KAFKA_LISTENERS", "PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,BROKER://0.0.0.0:29092")
+          .withEnv("KAFKA_ADVERTISED_LISTENERS", "PLAINTEXT://localhost:9092,CONTROLLER://localhost:9093,BROKER://localhost:29092")
+          .withEnv("KAFKA_LISTENER_SECURITY_PROTOCOL_MAP", "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,BROKER:PLAINTEXT")
+          .withEnv("KAFKA_CONTROLLER_QUORUM_VOTERS", "1@localhost:9093")
+          .withEnv("KAFKA_KRAFT_BROKER_ID", "1")
+          .withEnv("CLUSTER_ID", UUID.randomUUID().toString())
+          .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("Kafka")))
+          .waitingFor(Wait.forLogMessage(".*Kafka startTimeMs.*", 1));
 
 //    private static final KafkaContainer KAFKA = new KafkaContainer(DockerImageName.parse("apache/kafka:latest"))
 //            .withEnv("KAFKA_KRAFT_MODE", "true")
