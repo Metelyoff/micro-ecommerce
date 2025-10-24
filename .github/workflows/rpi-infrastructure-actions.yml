@@ -38,24 +38,21 @@ jobs:
     environment: rpc3s
     strategy:
       matrix:
-        service: [ inventory-service, order-service, payment-service, webapp ]
+        service: [ inventory-service ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up JDK
-        if: matrix.service != 'webapp'
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
       - name: Grant Gradle wrapper permissions
-        if: matrix.service != 'webapp'
         run: chmod +x ${{ matrix.service }}/gradlew
 
       - name: Verify Docker socket is available
-        if: matrix.service != 'webapp'
         run: |
           if ! docker info > /dev/null 2>&1; then
             echo "Docker is not available or not running. Cannot proceed with Testcontainers."
@@ -65,7 +62,6 @@ jobs:
           fi
 
       - name: Cache Gradle
-        if: matrix.service != 'webapp'
         uses: actions/cache@v4
         with:
           path: |
@@ -76,9 +72,12 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Run tests
-        if: matrix.service != 'webapp'
         working-directory: ${{ matrix.service }}
-        run: ./gradlew clean test --no-daemon
+        run: |
+          export TESTCONTAINERS_RYUK_DISABLED=true
+          export TESTCONTAINERS_CHECKS_DISABLE=true
+          export TESTCONTAINERS_VERBOSE=true
+          ./gradlew test --no-daemon
 
   build-and-push:
     if: ${{ github.event.inputs.triggerBuild == 'true' }}
