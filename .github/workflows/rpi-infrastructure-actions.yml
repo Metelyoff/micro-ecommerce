@@ -144,3 +144,4 @@ jobs:
 
       - name: Apply manifest
         run: kubectl apply -f k8s-micro-ecommerce.yaml --kubeconfig ~/.kube/config
+
