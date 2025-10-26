@@ -1439,6 +1439,7 @@ data:
         access: proxy
         url: http://prometheus.monitoring.svc.cluster.local:9090
         isDefault: true
+        uid: DS_PROMETHEUS
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -1577,7 +1578,7 @@ data:
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "Prometheus"
           },
           "fieldConfig": {
             "defaults": {
@@ -1641,7 +1642,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "editorMode": "code",
               "expr": "process_uptime_seconds{application=\"$application\", instance=\"$instance\", namespace=\"$Namespace\"}",
@@ -1660,7 +1661,7 @@ data:
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "Prometheus"
           },
           "fieldConfig": {
             "defaults": {
@@ -1728,7 +1729,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "editorMode": "code",
               "expr": "sum(jvm_memory_used_bytes{application=\"$application\", instance=\"$instance\", area=\"heap\", namespace=\"$Namespace\"})*100/sum(jvm_memory_max_bytes{application=\"$application\",instance=\"$instance\", area=\"heap\", namespace=\"$Namespace\"})",
@@ -1746,7 +1747,7 @@ data:
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "Prometheus"
           },
           "fieldConfig": {
             "defaults": {
@@ -1824,7 +1825,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "editorMode": "code",
               "expr": "sum(jvm_memory_used_bytes{application=\"$application\", instance=\"$instance\", area=\"nonheap\", namespace=\"$Namespace\"})*100/sum(jvm_memory_max_bytes{application=\"$application\",instance=\"$instance\", area=\"nonheap\", namespace=\"$Namespace\"})",
@@ -1846,7 +1847,7 @@ data:
           "dashes": false,
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "Prometheus"
           },
           "fill": 1,
           "fillGradient": 0,
@@ -1887,7 +1888,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "editorMode": "code",
               "expr": "process_files_open_files{application=\"$application\", instance=\"$instance\", namespace=\"$Namespace\"}",
@@ -1931,7 +1932,7 @@ data:
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "Prometheus"
           },
           "fieldConfig": {
             "defaults": {
@@ -1994,7 +1995,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "editorMode": "code",
               "expr": "process_start_time_seconds{application=\"$application\", instance=\"$instance\", namespace=\"$Namespace\"}*1000",
@@ -2013,7 +2014,7 @@ data:
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "Prometheus"
           },
           "fieldConfig": {
             "defaults": {
@@ -2098,7 +2099,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "editorMode": "code",
               "expr": "system_cpu_usage{instance=\"$instance\", application=\"$application\", namespace=\"$Namespace\"}",
@@ -2111,7 +2112,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "editorMode": "code",
               "expr": "process_cpu_usage{instance=\"$instance\", application=\"$application\", namespace=\"$Namespace\"}",
@@ -2128,7 +2129,7 @@ data:
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "Prometheus"
           },
           "fieldConfig": {
             "defaults": {
@@ -2213,7 +2214,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "editorMode": "code",
               "expr": "system_load_average_1m{instance=\"$instance\", application=\"$application\", namespace=\"$Namespace\"}",
@@ -2226,7 +2227,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "editorMode": "code",
               "expr": "system_cpu_count{instance=\"$instance\", application=\"$application\", namespace=\"$Namespace\"}",
@@ -2257,7 +2258,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "fieldConfig": {
                 "defaults": {
@@ -2344,7 +2345,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "jvm_memory_used_bytes{instance=\"$instance\", application=\"$application\", id=\"$memory_pool_heap\", namespace=\"$Namespace\"}",
@@ -2357,7 +2358,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "jvm_memory_committed_bytes{instance=\"$instance\", application=\"$application\", id=\"$memory_pool_heap\", namespace=\"$Namespace\"}",
@@ -2370,7 +2371,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "jvm_memory_max_bytes{instance=\"$instance\", application=\"$application\", id=\"$memory_pool_heap\", namespace=\"$Namespace\"}",
@@ -2387,7 +2388,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "fieldConfig": {
                 "defaults": {
@@ -2474,7 +2475,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "jvm_memory_used_bytes{instance=\"$instance\", application=\"$application\", id=\"${memory_pool_nonheap:raw}\", namespace=\"$Namespace\"}",
@@ -2488,7 +2489,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "jvm_memory_committed_bytes{instance=\"$instance\", application=\"$application\", id=\"${memory_pool_nonheap:raw}\", namespace=\"$Namespace\"}",
@@ -2502,7 +2503,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "jvm_memory_max_bytes{instance=\"$instance\", application=\"$application\", id=\"${memory_pool_nonheap:raw}\", namespace=\"$Namespace\"}",
@@ -2520,7 +2521,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "fieldConfig": {
                 "defaults": {
@@ -2605,7 +2606,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "jvm_threads_daemon_threads{instance=\"$instance\", application=\"$application\", namespace=\"$Namespace\"}",
@@ -2618,7 +2619,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "jvm_threads_live_threads{instance=\"$instance\", application=\"$application\", namespace=\"$Namespace\"}",
@@ -2631,7 +2632,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "jvm_threads_peak_threads{instance=\"$instance\", application=\"$application\", namespace=\"$Namespace\"}",
@@ -2648,7 +2649,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "fieldConfig": {
                 "defaults": {
@@ -2727,7 +2728,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "jvm_buffer_memory_used_bytes{instance=\"$instance\", application=\"$application\", id=\"direct\", namespace=\"$Namespace\"}",
@@ -2740,7 +2741,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "jvm_buffer_total_capacity_bytes{instance=\"$instance\", application=\"$application\", id=\"direct\", namespace=\"$Namespace\"}",
@@ -2757,7 +2758,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "fieldConfig": {
                 "defaults": {
@@ -2836,7 +2837,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "jvm_buffer_memory_used_bytes{instance=\"$instance\", application=\"$application\", id=\"mapped\", namespace=\"$Namespace\"}",
@@ -2849,7 +2850,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "jvm_buffer_total_capacity_bytes{instance=\"$instance\", application=\"$application\", id=\"mapped\", namespace=\"$Namespace\"}",
@@ -2866,7 +2867,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "fieldConfig": {
                 "defaults": {
@@ -2945,7 +2946,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "irate(jvm_gc_memory_allocated_bytes_total{instance=\"$instance\", application=\"$application\", namespace=\"$Namespace\"}[$__rate_interval])",
@@ -2958,7 +2959,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "irate(jvm_gc_memory_promoted_bytes_total{instance=\"$instance\", application=\"$application\", namespace=\"$Namespace\"}[$__rate_interval])",
@@ -3002,7 +3003,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "fieldConfig": {
                 "defaults": {
@@ -3087,7 +3088,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "irate(jvm_gc_pause_seconds_count{instance=\"$instance\", application=\"$application\", namespace=\"$Namespace\"}[$__rate_interval])",
@@ -3104,7 +3105,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "fieldConfig": {
                 "defaults": {
@@ -3189,7 +3190,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "irate(jvm_gc_pause_seconds_sum{instance=\"$instance\", application=\"$application\", namespace=\"$Namespace\"}[$__rate_interval])",
@@ -3233,7 +3234,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "fieldConfig": {
                 "defaults": {
@@ -3295,7 +3296,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "hikaricp_connections{instance=\"$instance\", application=\"$application\", pool=\"$hikaricp\", namespace=\"$Namespace\"}",
@@ -3312,7 +3313,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "fieldConfig": {
                 "defaults": {
@@ -3396,7 +3397,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "hikaricp_connections_active{instance=\"$instance\", application=\"$application\", pool=\"$hikaricp\", namespace=\"$Namespace\"}",
@@ -3409,7 +3410,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "hikaricp_connections_idle{instance=\"$instance\", application=\"$application\", pool=\"$hikaricp\", namespace=\"$Namespace\"}",
@@ -3422,7 +3423,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "hikaricp_connections_pending{instance=\"$instance\", application=\"$application\", pool=\"$hikaricp\", namespace=\"$Namespace\"}",
@@ -3439,7 +3440,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "fieldConfig": {
                 "defaults": {
@@ -3501,7 +3502,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "hikaricp_connections_timeout_total{instance=\"$instance\", application=\"$application\", pool=\"$hikaricp\", namespace=\"$Namespace\"}",
@@ -3522,7 +3523,7 @@ data:
               "dashes": false,
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "fill": 1,
               "fillGradient": 0,
@@ -3563,7 +3564,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "expr": "hikaricp_connections_creation_seconds_sum{instance=\"$instance\", application=\"$application\", pool=\"$hikaricp\"} / hikaricp_connections_creation_seconds_count{instance=\"$instance\", application=\"$application\", pool=\"$hikaricp\"}",
                   "format": "time_series",
@@ -3609,7 +3610,7 @@ data:
               "dashes": false,
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "fill": 1,
               "fillGradient": 0,
@@ -3650,7 +3651,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "expr": "hikaricp_connections_usage_seconds_sum{instance=\"$instance\", application=\"$application\", pool=\"$hikaricp\"} / hikaricp_connections_usage_seconds_count{instance=\"$instance\", application=\"$application\", pool=\"$hikaricp\"}",
                   "format": "time_series",
@@ -3696,7 +3697,7 @@ data:
               "dashes": false,
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "fill": 1,
               "fillGradient": 0,
@@ -3737,7 +3738,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "expr": "hikaricp_connections_acquire_seconds_sum{instance=\"$instance\", application=\"$application\", pool=\"$hikaricp\"} / hikaricp_connections_acquire_seconds_count{instance=\"$instance\", application=\"$application\", pool=\"$hikaricp\"}",
                   "format": "time_series",
@@ -3806,7 +3807,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "fieldConfig": {
                 "defaults": {
@@ -3886,7 +3887,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "irate(http_server_requests_seconds_count{instance=\"$instance\", application=\"$application\", uri!~\".*(prometheus|health).*\", namespace=\"$Namespace\"}[$__rate_interval])",
@@ -3903,7 +3904,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "fieldConfig": {
                 "defaults": {
@@ -3987,7 +3988,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "irate(http_server_requests_seconds_sum{instance=\"$instance\", application=\"$application\", exception=\"none\", uri!~\".*(prometheus|health).*\", namespace=\"$Namespace\"}[$__rate_interval]) / irate(http_server_requests_seconds_count{instance=\"$instance\", application=\"$application\", exception=\"none\",uri!~\".*(prometheus|health).*\", namespace=\"$Namespace\"}[$__rate_interval])",
@@ -4031,7 +4032,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "fieldConfig": {
                 "defaults": {
@@ -4117,7 +4118,7 @@ data:
                   "alias": "",
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "irate(logback_events_total{instance=\"$instance\", application=\"$application\", level=\"info\", namespace=\"$Namespace\"}[$__rate_interval])",
@@ -4131,7 +4132,7 @@ data:
                 {
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "logback_events_total{instance=\"$instance\", application=\"$application\"}",
@@ -4147,7 +4148,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "fieldConfig": {
                 "defaults": {
@@ -4233,7 +4234,7 @@ data:
                   "alias": "",
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "irate(logback_events_total{instance=\"$instance\", application=\"$application\", level=\"error\", namespace=\"$Namespace\"}[$__rate_interval])",
@@ -4251,7 +4252,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "fieldConfig": {
                 "defaults": {
@@ -4337,7 +4338,7 @@ data:
                   "alias": "",
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "irate(logback_events_total{instance=\"$instance\", application=\"$application\", level=\"warn\", namespace=\"$Namespace\"}[$__rate_interval])",
@@ -4355,7 +4356,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "fieldConfig": {
                 "defaults": {
@@ -4441,7 +4442,7 @@ data:
                   "alias": "",
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "irate(logback_events_total{instance=\"$instance\", application=\"$application\", level=\"debug\", namespace=\"$Namespace\"}[$__rate_interval])",
@@ -4459,7 +4460,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
+                "uid": "Prometheus"
               },
               "fieldConfig": {
                 "defaults": {
@@ -4545,7 +4546,7 @@ data:
                   "alias": "",
                   "datasource": {
                     "type": "prometheus",
-                    "uid": "${DS_PROMETHEUS}"
+                    "uid": "Prometheus"
                   },
                   "editorMode": "code",
                   "expr": "irate(logback_events_total{instance=\"$instance\", application=\"$application\", level=\"trace\", namespace=\"$Namespace\"}[$__rate_interval])",
@@ -4586,7 +4587,7 @@ data:
             "current": {},
             "datasource": {
               "type": "prometheus",
-              "uid": "${DS_PROMETHEUS}"
+              "uid": "Prometheus"
             },
             "definition": "label_values(jvm_info,application)",
             "hide": 0,
@@ -4612,7 +4613,7 @@ data:
             "current": {},
             "datasource": {
               "type": "prometheus",
-              "uid": "${DS_PROMETHEUS}"
+              "uid": "Prometheus"
             },
             "definition": "label_values(jvm_info,namespace)",
             "hide": 0,
@@ -4634,7 +4635,7 @@ data:
             "current": {},
             "datasource": {
               "type": "prometheus",
-              "uid": "${DS_PROMETHEUS}"
+              "uid": "Prometheus"
             },
             "definition": "label_values(jvm_info{application=\"$application\", namespace=\"$Namespace\"},instance)",
             "hide": 0,
@@ -4660,7 +4661,7 @@ data:
             "current": {},
             "datasource": {
               "type": "prometheus",
-              "uid": "${DS_PROMETHEUS}"
+              "uid": "Prometheus"
             },
             "definition": "",
             "hide": 0,
@@ -4686,7 +4687,7 @@ data:
             "current": {},
             "datasource": {
               "type": "prometheus",
-              "uid": "${DS_PROMETHEUS}"
+              "uid": "Prometheus"
             },
             "definition": "label_values(jvm_memory_used_bytes{application=\"$application\", instance=\"$instance\", area=\"heap\"},id)",
             "hide": 0,
@@ -4712,7 +4713,7 @@ data:
             "current": {},
             "datasource": {
               "type": "prometheus",
-              "uid": "${DS_PROMETHEUS}"
+              "uid": "Prometheus"
             },
             "definition": "label_values(jvm_memory_used_bytes{application=\"$application\", instance=\"$instance\", area=\"nonheap\"},id)",
             "hide": 0,
@@ -4772,6 +4773,89 @@ data:
       "weekStart": ""
     }
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-alerting
+  namespace: monitoring
+  labels:
+    grafana_alerting: "1"
+data:
+  alerting.yaml: |
+    apiVersion: 1
+    groups:
+      - name: ecommerce-alerts
+        interval: 1m
+        rules:
+          - uid: high_cpu_usage
+            title: High CPU Usage (>80%)
+            condition: A
+            data:
+              - refId: A
+                queryType: prometheus
+                relativeTimeRange:
+                  from: 60
+                  to: 0
+                datasourceUid: DS_PROMETHEUS
+                model:
+                  expr: sum(rate(container_cpu_usage_seconds_total[1m])) by (pod) > 0.8
+                  legendFormat: "{{pod}}"
+                  refId: A
+            noDataState: NoData
+            execErrState: Error
+            for: 1m
+            annotations:
+              summary: "High CPU usage detected"
+              description: "Pod {{pod}} is using >80% CPU."
+            labels:
+              severity: warning
+
+          - uid: high_memory_usage
+            title: High Memory Usage (>80%)
+            condition: A
+            data:
+              - refId: A
+                queryType: prometheus
+                relativeTimeRange:
+                  from: 60
+                  to: 0
+                datasourceUid: DS_PROMETHEUS
+                model:
+                  expr: sum(container_memory_usage_bytes / container_spec_memory_limit_bytes) by (pod) > 0.8
+                  legendFormat: "{{pod}}"
+                  refId: A
+            noDataState: NoData
+            execErrState: Error
+            for: 1m
+            annotations:
+              summary: "High memory usage detected"
+              description: "Pod {{pod}} is using >80% memory."
+            labels:
+              severity: warning
+
+          - uid: pod_down
+            title: Pod is Down
+            condition: A
+            data:
+              - refId: A
+                queryType: prometheus
+                relativeTimeRange:
+                  from: 60
+                  to: 0
+                datasourceUid: DS_PROMETHEUS
+                model:
+                  expr: kube_pod_status_phase{phase="Running"} == 0
+                  legendFormat: "{{pod}}"
+                  refId: A
+            noDataState: NoData
+            execErrState: Error
+            for: 2m
+            annotations:
+              summary: "Pod down detected"
+              description: "Pod {{pod}} is not running."
+            labels:
+              severity: critical
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -4803,6 +4887,9 @@ spec:
         - name: grafana-dashboard-provider
           configMap:
             name: grafana-dashboard-provider
+        - name: grafana-alerting
+          configMap:
+            name: grafana-alerting
       containers:
         - name: grafana
           image: grafana/grafana
@@ -4815,6 +4902,8 @@ spec:
               mountPath: /etc/grafana/provisioning/dashboards
             - name: grafana-dashboard-apps
               mountPath: /var/lib/grafana/dashboards/apps
+            - name: grafana-alerting
+              mountPath: /etc/grafana/provisioning/alerting
           env:
             - name: GF_SMTP_ENABLED
               value: "true"
