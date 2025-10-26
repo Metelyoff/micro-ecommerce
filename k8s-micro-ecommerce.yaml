@@ -526,10 +526,10 @@ spec:
               value: "prod"
           resources:
             requests:
-              memory: "128Mi"
+              memory: "512Mi"
               cpu: "200m"
             limits:
-              memory: "128Mi"
+              memory: "512Mi"
               cpu: "200m"
 ---
 apiVersion: v1
@@ -616,11 +616,11 @@ spec:
               value: "origin,content-type,accept,authorization"
           resources:
             requests:
-              memory: "768Mi"
-              cpu: "500m"
+              memory: "1536Mi"
+              cpu: "1000m"
             limits:
-              memory: "768Mi"
-              cpu: "500m"
+              memory: "1536Mi"
+              cpu: "1000m"
 ---
 apiVersion: v1
 kind: Service
@@ -857,6 +857,8 @@ metadata:
 spec:
   template:
     spec:
+      nodeSelector:
+        node-role.kubernetes.io/worker: "true"
       restartPolicy: Never
       initContainers:
         - name: wait-for-debezium
@@ -878,6 +880,13 @@ spec:
           volumeMounts:
             - name: connector-configs
               mountPath: /connectors
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "64Mi"
+              cpu: "100m"
       volumes:
         - name: connector-configs
           configMap:
@@ -936,15 +945,15 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8080
-            initialDelaySeconds: 5
+            initialDelaySeconds: 15
             periodSeconds: 5
-            failureThreshold: 10
+            failureThreshold: 25
           resources:
             requests:
-              memory: "384Mi"
+              memory: "512Mi"
               cpu: "200m"
             limits:
-              memory: "384Mi"
+              memory: "512Mi"
               cpu: "200m"
 ---
 apiVersion: v1
@@ -1019,15 +1028,15 @@ spec:
             httpGet:
               path: /actuator/health
               port: 80
-            initialDelaySeconds: 5
+            initialDelaySeconds: 15
             periodSeconds: 5
-            failureThreshold: 10
+            failureThreshold: 25
           resources:
             requests:
-              memory: "384Mi"
+              memory: "512Mi"
               cpu: "200m"
             limits:
-              memory: "384Mi"
+              memory: "512Mi"
               cpu: "200m"
 ---
 apiVersion: v1
@@ -1096,15 +1105,15 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8080
-            initialDelaySeconds: 5
+            initialDelaySeconds: 15
             periodSeconds: 5
-            failureThreshold: 10
+            failureThreshold: 25
           resources:
             requests:
-              memory: "384Mi"
+              memory: "512Mi"
               cpu: "200m"
             limits:
-              memory: "384Mi"
+              memory: "512Mi"
               cpu: "200m"
 ---
 apiVersion: v1
@@ -1364,77 +1373,6 @@ spec:
       port: 9090
       targetPort: 9090
   type: ClusterIP
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: grafana
-  namespace: monitoring
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: grafana
-  template:
-    metadata:
-      labels:
-        app: grafana
-    spec:
-      nodeSelector:
-        node-role.kubernetes.io/worker: "true"
-      initContainers:
-        - name: wait-for-prometheus
-          image: busybox
-          command: [ 'sh', '-c', 'until nc -z prometheus.monitoring.svc.cluster.local 9090; do echo waiting for prometheus; sleep 2; done;' ]
-      volumes:
-        - name: grafana-datasources
-          configMap:
-            name: grafana-datasources
-        - name: grafana-dashboards
-          configMap:
-            name: grafana-dashboard-apps
-        - name: grafana-dashboard-provider
-          configMap:
-            name: grafana-dashboard-provider
-      containers:
-        - name: grafana
-          image: grafana/grafana
-          ports:
-            - containerPort: 3000
-          volumeMounts:
-            - name: grafana-datasources
-              mountPath: /etc/grafana/provisioning/datasources
-            - name: grafana-dashboard-provider
-              mountPath: /etc/grafana/provisioning/dashboards
-            - name: grafana-dashboards
-              mountPath: /var/lib/grafana/dashboards/apps
-          env:
-            - name: GF_SMTP_ENABLED
-              value: "true"
-            - name: GF_SMTP_HOST
-              value: "smtp.resend.com:587"
-            - name: GF_SMTP_USER
-              value: "resend"
-            - name: GF_SMTP_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: grafana-smtp-secret
-                  key: smtp-password
-            - name: GF_SMTP_FROM_ADDRESS
-              value: "grafana@rpik3s.xyz"
-            - name: GF_SMTP_FROM_NAME
-              value: "Grafana"
-            - name: GF_SMTP_SKIP_VERIFY
-              value: "true"
-            - name: GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH
-              value: /var/lib/grafana/dashboards/apps/apps-dashboard.json
-          resources:
-            requests:
-              memory: "256Mi"
-              cpu: "200m"
-            limits:
-              memory: "256Mi"
-              cpu: "200m"
 ---
 apiVersion: v1
 kind: Service
@@ -4828,3 +4766,73 @@ data:
       "weekStart": ""
     }
 ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      nodeSelector:
+        node-role.kubernetes.io/worker: "true"
+      initContainers:
+        - name: wait-for-prometheus
+          image: busybox
+          command: [ 'sh', '-c', 'until nc -z prometheus.monitoring.svc.cluster.local 9090; do echo waiting for prometheus; sleep 2; done;' ]
+      volumes:
+        - name: grafana-datasources
+          configMap:
+            name: grafana-datasources
+        - name: grafana-dashboards
+          configMap:
+            name: grafana-dashboard-apps
+        - name: grafana-dashboard-provider
+          configMap:
+            name: grafana-dashboard-provider
+      containers:
+        - name: grafana
+          image: grafana/grafana
+          ports:
+            - containerPort: 3000
+          volumeMounts:
+            - name: grafana-datasources
+              mountPath: /etc/grafana/provisioning/datasources
+            - name: grafana-dashboard-provider
+              mountPath: /etc/grafana/provisioning/dashboards
+            - name: grafana-dashboards
+              mountPath: /var/lib/grafana/dashboards/apps
+          env:
+            - name: GF_SMTP_ENABLED
+              value: "true"
+            - name: GF_SMTP_HOST
+              value: "smtp.resend.com:587"
+            - name: GF_SMTP_USER
+              value: "resend"
+            - name: GF_SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-smtp-secret
+                  key: smtp-password
+            - name: GF_SMTP_FROM_ADDRESS
+              value: "grafana@rpik3s.xyz"
+            - name: GF_SMTP_FROM_NAME
+              value: "Grafana"
+            - name: GF_SMTP_SKIP_VERIFY
+              value: "true"
+            - name: GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH
+              value: /var/lib/grafana/dashboards/apps/apps-dashboard.json
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
