@@ -12,6 +12,11 @@ on:
 
   workflow_dispatch:
     inputs:
+      triggerStart:
+        description: 'Start workflow'
+        required: true
+        type: boolean
+        default: false
       triggerDeploy:
         description: 'Deploy to cluster'
         required: true
@@ -23,6 +28,7 @@ env:
 
 jobs:
   tests:
+    if: ${{ github.event.inputs.triggerStart == 'true' }}
     runs-on: self-hosted
     environment: rpc3s
     strategy:
