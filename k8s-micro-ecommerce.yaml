@@ -4785,6 +4785,7 @@ data:
     apiVersion: 1
     groups:
       - name: ecommerce-alerts
+        folder: ecommerce-alerts
         interval: 1m
         rules:
           - uid: high_cpu_usage
@@ -4861,6 +4862,8 @@ kind: Deployment
 metadata:
   name: grafana
   namespace: monitoring
+  labels:
+    app: grafana
 spec:
   replicas: 1
   selector:
@@ -4876,34 +4879,12 @@ spec:
       initContainers:
         - name: wait-for-prometheus
           image: busybox
-          command: [ 'sh', '-c', 'until nc -z prometheus.monitoring.svc.cluster.local 9090; do echo waiting for prometheus; sleep 2; done;' ]
-      volumes:
-        - name: grafana-datasources
-          configMap:
-            name: grafana-datasources
-        - name: grafana-dashboard-apps
-          configMap:
-            name: grafana-dashboard-apps
-        - name: grafana-dashboard-provider
-          configMap:
-            name: grafana-dashboard-provider
-        - name: grafana-alerting
-          configMap:
-            name: grafana-alerting
+          command: [ 'sh', '-c', 'until nc -z prometheus.monitoring.svc.cluster.local 9090; do echo waiting for prometheus; sleep 5; done;' ]
       containers:
         - name: grafana
-          image: grafana/grafana
+          image: grafana/grafana:latest
           ports:
             - containerPort: 3000
-          volumeMounts:
-            - name: grafana-datasources
-              mountPath: /etc/grafana/provisioning/datasources
-            - name: grafana-dashboard-provider
-              mountPath: /etc/grafana/provisioning/dashboards
-            - name: grafana-dashboard-apps
-              mountPath: /var/lib/grafana/dashboards/apps
-            - name: grafana-alerting
-              mountPath: /etc/grafana/provisioning/alerting
           env:
             - name: GF_SMTP_ENABLED
               value: "true"
@@ -4924,6 +4905,19 @@ spec:
               value: "true"
             - name: GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH
               value: /var/lib/grafana/dashboards/apps/apps-dashboard.json
+          volumeMounts:
+            - name: grafana-datasources
+              mountPath: /etc/grafana/provisioning/datasources
+              readOnly: true
+            - name: grafana-dashboard-provider
+              mountPath: /etc/grafana/provisioning/dashboards
+              readOnly: true
+            - name: grafana-dashboard-apps
+              mountPath: /var/lib/grafana/dashboards/apps
+              readOnly: true
+            - name: grafana-alerting
+              mountPath: /etc/grafana/provisioning/alerting
+              readOnly: true
           resources:
             requests:
               memory: "256Mi"
@@ -4931,3 +4925,16 @@ spec:
             limits:
               memory: "256Mi"
               cpu: "200m"
+      volumes:
+        - name: grafana-datasources
+          configMap:
+            name: grafana-datasources
+        - name: grafana-dashboard-provider
+          configMap:
+            name: grafana-dashboard-provider
+        - name: grafana-dashboard-apps
+          configMap:
+            name: grafana-dashboard-apps
+        - name: grafana-alerting
+          configMap:
+            name: grafana-alerting
