@@ -616,11 +616,11 @@ spec:
               value: "origin,content-type,accept,authorization"
           resources:
             requests:
-              memory: "1536Mi"
-              cpu: "1000m"
+              memory: "2Gi"
+              cpu: "2000m"
             limits:
-              memory: "1536Mi"
-              cpu: "1000m"
+              memory: "2Gi"
+              cpu: "2000m"
 ---
 apiVersion: v1
 kind: Service
@@ -850,47 +850,52 @@ data:
     }
 ---
 apiVersion: batch/v1
-kind: Job
+kind: CronJob
 metadata:
   name: debezium-connector
   namespace: ecommerce
 spec:
-  template:
+  schedule: "*/5 * * * *"
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
     spec:
-      nodeSelector:
-        node-role.kubernetes.io/worker: "true"
-      restartPolicy: Never
-      initContainers:
-        - name: wait-for-debezium
-          image: busybox
-          command:
-            - sh
-            - -c
-            - |
-              echo "Waiting for Debezium to become available..."
-              until wget -q --spider http://debezium:8083/connectors; do
-                echo "Debezium not ready, retrying..."
-                sleep 3
-              done
-              echo "Debezium is ready!"
-      containers:
-        - name: debezium-connector
-          image: curlimages/curl
-          command: [ "sh", "/connectors/register-connectors.sh" ]
-          volumeMounts:
+      template:
+        spec:
+          nodeSelector:
+            node-role.kubernetes.io/worker: "true"
+          restartPolicy: Never
+          initContainers:
+            - name: wait-for-debezium
+              image: busybox
+              command:
+                - sh
+                - -c
+                - |
+                  echo "Waiting for Debezium to become available..."
+                  until wget -q --spider http://debezium:8083/connectors; do
+                    echo "Debezium not ready, retrying..."
+                    sleep 3
+                  done
+                  echo "Debezium is ready!"
+          containers:
+            - name: debezium-connector
+              image: curlimages/curl
+              command: [ "sh", "/connectors/register-connectors.sh" ]
+              volumeMounts:
+                - name: connector-configs
+                  mountPath: /connectors
+              resources:
+                requests:
+                  memory: "64Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "64Mi"
+                  cpu: "100m"
+          volumes:
             - name: connector-configs
-              mountPath: /connectors
-          resources:
-            requests:
-              memory: "64Mi"
-              cpu: "100m"
-            limits:
-              memory: "64Mi"
-              cpu: "100m"
-      volumes:
-        - name: connector-configs
-          configMap:
-            name: debezium-connectors
+              configMap:
+                name: debezium-connectors
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -1312,14 +1317,15 @@ data:
   prometheus.yml: |
     global:
       scrape_interval: 15s
+
     scrape_configs:
-      - job_name: 'kubernetes'
+      - job_name: 'microservices'
+        metrics_path: /actuator/prometheus
         static_configs:
-          - targets: [ 
-              'order-service.ecommerce.svc.cluster.local:8086', 
-              'payment-service.ecommerce.svc.cluster.local:8085', 
-              'inventory-service.ecommerce.svc.cluster.local:80' 
-            ]
+          - targets:
+              - 'order-service.ecommerce.svc.cluster.local:8086'
+              - 'payment-service.ecommerce.svc.cluster.local:8085'
+              - 'inventory-service.ecommerce.svc.cluster.local:80'
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -4791,7 +4797,7 @@ spec:
         - name: grafana-datasources
           configMap:
             name: grafana-datasources
-        - name: grafana-dashboards
+        - name: grafana-dashboard-apps
           configMap:
             name: grafana-dashboard-apps
         - name: grafana-dashboard-provider
@@ -4807,7 +4813,7 @@ spec:
               mountPath: /etc/grafana/provisioning/datasources
             - name: grafana-dashboard-provider
               mountPath: /etc/grafana/provisioning/dashboards
-            - name: grafana-dashboards
+            - name: grafana-dashboard-apps
               mountPath: /var/lib/grafana/dashboards/apps
           env:
             - name: GF_SMTP_ENABLED
