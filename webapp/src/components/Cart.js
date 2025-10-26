@@ -113,7 +113,7 @@ const Cart = ({ cart, products, updateQuantity, removeFromCart, confirmOrder, or
     setShowPaymentModal(false);
     setShowLoader(true);
 
-    fetch(`$API_URL/payments/${currentOrder.paymentId}/pay`, {
+    fetch(`/api/payments/${currentOrder.paymentId}/pay`, {
       method: 'POST'
     })
       .then(response => response.json())

@@ -93,9 +93,10 @@ spec:
             - "config_file=/etc/postgresql/postgresql.conf"
           readinessProbe:
             exec:
-              command: [ "pg_isready", "-U", "postgres" ]
-            initialDelaySeconds: 5
+              command: [ "pg_isready", "-U", "${POSTGRES_USER}" ]
+            initialDelaySeconds: 15
             periodSeconds: 10
+            failureThreshold: 25
           resources:
             requests:
               memory: "384Mi"
@@ -212,9 +213,10 @@ spec:
             - "config_file=/etc/postgresql/postgresql.conf"
           readinessProbe:
             exec:
-              command: [ "pg_isready", "-U", "postgres" ]
-            initialDelaySeconds: 5
+              command: [ "pg_isready", "-U", "${POSTGRES_USER}" ]
+            initialDelaySeconds: 15
             periodSeconds: 10
+            failureThreshold: 25
           resources:
             requests:
               memory: "384Mi"
@@ -346,9 +348,10 @@ spec:
             - "config_file=/etc/postgresql/postgresql.conf"
           readinessProbe:
             exec:
-              command: [ "pg_isready", "-U", "${INVENTORY_POSTGRES_USER}" ]
-            initialDelaySeconds: 5
+              command: [ "pg_isready", "-U", "${POSTGRES_USER}" ]
+            initialDelaySeconds: 15
             periodSeconds: 10
+            failureThreshold: 25
           resources:
             requests:
               memory: "384Mi"
@@ -929,6 +932,7 @@ spec:
       containers:
         - name: payment-service
           image: ${IMAGE_NAME}:payment-service
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           env:
@@ -955,10 +959,10 @@ spec:
             failureThreshold: 25
           resources:
             requests:
-              memory: "512Mi"
+              memory: "768Mi"
               cpu: "200m"
             limits:
-              memory: "512Mi"
+              memory: "768Mi"
               cpu: "200m"
 ---
 apiVersion: v1
@@ -1008,6 +1012,7 @@ spec:
       containers:
         - name: inventory-service
           image: ${IMAGE_NAME}:inventory-service
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
           env:
@@ -1038,10 +1043,10 @@ spec:
             failureThreshold: 25
           resources:
             requests:
-              memory: "512Mi"
+              memory: "768Mi"
               cpu: "200m"
             limits:
-              memory: "512Mi"
+              memory: "768Mi"
               cpu: "200m"
 ---
 apiVersion: v1
@@ -1091,6 +1096,7 @@ spec:
       containers:
         - name: order-service
           image: ${IMAGE_NAME}:order-service
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           env:
@@ -1115,10 +1121,10 @@ spec:
             failureThreshold: 25
           resources:
             requests:
-              memory: "512Mi"
+              memory: "768Mi"
               cpu: "200m"
             limits:
-              memory: "512Mi"
+              memory: "768Mi"
               cpu: "200m"
 ---
 apiVersion: v1
@@ -1172,6 +1178,7 @@ spec:
       containers:
         - name: web
           image: ${IMAGE_NAME}:webapp
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
           env:
@@ -4790,7 +4797,7 @@ data:
         rules:
           - uid: high_cpu_usage
             title: High CPU Usage (>80%)
-            condition: A
+            condition: C
             data:
               - refId: A
                 queryType: prometheus
@@ -4799,17 +4806,41 @@ data:
                   to: 0
                 datasourceUid: DS_PROMETHEUS
                 model:
-                  expr: sum(rate(container_cpu_usage_seconds_total[1m])) by (pod) > 0.8
-                  legendFormat: "{{pod}}"
+                  expr: sum(rate(container_cpu_usage_seconds_total[1m])) by (pod)
+                  intervalMs: 1000
+                  legendFormat: '{{pod}}'
+                  maxDataPoints: 43200
                   refId: A
+                  instant: true
+              - refId: C
+                datasourceUid: __expr__
+                model:
+                  expression: A > 0.8
+                  type: threshold
+                  conditions:
+                    - type: query
+                      query:
+                        params: [C]
+                      reducer:
+                        type: last
+                        params: []
+                      evaluator:
+                        type: gt
+                        params: [0]
+                      operator:
+                        type: and
+                  refId: C
+                  maxDataPoints: 43200
+                  intervalMs: 1000
             noDataState: NoData
             execErrState: Error
             for: 1m
             annotations:
-              summary: "High CPU usage detected"
-              description: "Pod {{pod}} is using >80% CPU."
+              description: Pod {{pod}} is using >80% CPU.
+              summary: High CPU usage detected
             labels:
               severity: warning
+            isPaused: false
 
           - uid: high_memory_usage
             title: High Memory Usage (>80%)
@@ -4845,7 +4876,7 @@ data:
                   to: 0
                 datasourceUid: DS_PROMETHEUS
                 model:
-                  expr: kube_pod_status_phase{phase="Running"} == 0
+                  expr: absent(kube_pod_status_phase{phase="Running"}) == 1
                   legendFormat: "{{pod}}"
                   refId: A
             noDataState: NoData

@@ -12,7 +12,7 @@ const useFetchProducts = () => {
   useEffect(() => {
     if (!fetchCalled.current) {
       fetchCalled.current = true;
-      fetch('$API_URL/items')
+      fetch('/api/items')
         .then(response => response.json())
         .then(data => setProducts(data));
     }
@@ -92,12 +92,12 @@ const useOrderStatus = (setPaymentAmount, setPaymentExpiry, setIsCartLocked, set
       eventSourceRef.current.close(); // Close any previous SSE connections
     }
 
-    const newEventSource = new EventSource(`$API_URL/orders/subscribe/${orderId}`);
+    const newEventSource = new EventSource(`/api/orders/subscribe/${orderId}`);
     newEventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
       setOrderStatuses(prevStatuses => [...prevStatuses, { status: data.status, statusDescription: data.statusDescription, paymentId: data.paymentId }]);
       if (data.status === 'PENDING_FOR_PAY' && data.paymentId) {
-        fetch(`$API_URL/payments/${data.paymentId}`)
+        fetch(`/api/payments/${data.paymentId}`)
           .then(response => response.json())
           .then(paymentData => {
             setPaymentAmount(paymentData.amount);
@@ -135,10 +135,10 @@ const useOrderStatus = (setPaymentAmount, setPaymentExpiry, setIsCartLocked, set
     const savedOrderId = localStorage.getItem('currentOrderId');
     if (savedOrderId) {
       subscribeToOrderStatus(savedOrderId);
-      fetch(`$API_URL/orders/${savedOrderId}`)
+      fetch(`/api/orders/${savedOrderId}`)
         .then(response => response.json())
         .then(orderData => {
-          fetch(`$API_URL/payments/${orderData.paymentId}`)
+          fetch(`/api/payments/${orderData.paymentId}`)
             .then(response => response.json())
             .then(paymentData => {
               setPaymentAmount(paymentData.amount);
@@ -191,7 +191,7 @@ const App = () => {
       }))
     };
 
-    fetch('$API_URL/orders', {
+    fetch('/api/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(order)
