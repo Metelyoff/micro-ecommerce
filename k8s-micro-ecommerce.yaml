@@ -4938,4 +4938,3 @@ spec:
         - name: grafana-alerting
           configMap:
             name: grafana-alerting
-
