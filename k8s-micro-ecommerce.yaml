@@ -99,11 +99,11 @@ spec:
             failureThreshold: 25
           resources:
             requests:
-              memory: "384Mi"
-              cpu: "200m"
+              memory: "512Mi"
+              cpu: "500m"
             limits:
-              memory: "384Mi"
-              cpu: "200m"
+              memory: "512Mi"
+              cpu: "500m"
       volumes:
         - name: config
           configMap:
@@ -219,11 +219,11 @@ spec:
             failureThreshold: 25
           resources:
             requests:
-              memory: "384Mi"
-              cpu: "200m"
+              memory: "512Mi"
+              cpu: "500m"
             limits:
-              memory: "384Mi"
-              cpu: "200m"
+              memory: "512Mi"
+              cpu: "500m"
       volumes:
         - name: config
           configMap:
@@ -354,11 +354,11 @@ spec:
             failureThreshold: 25
           resources:
             requests:
-              memory: "384Mi"
-              cpu: "200m"
+              memory: "512Mi"
+              cpu: "500m"
             limits:
-              memory: "384Mi"
-              cpu: "200m"
+              memory: "512Mi"
+              cpu: "500m"
       volumes:
         - name: config
           configMap:
@@ -446,10 +446,10 @@ spec:
               value: "ecommerce"
           resources:
             requests:
-              memory: "768Mi"
+              memory: "1024Mi"
               cpu: "500m"
             limits:
-              memory: "768Mi"
+              memory: "1024Mi"
               cpu: "500m"
 ---
 apiVersion: v1
@@ -529,11 +529,11 @@ spec:
               value: "prod"
           resources:
             requests:
-              memory: "512Mi"
-              cpu: "200m"
+              memory: "128Mi"
+              cpu: "300m"
             limits:
-              memory: "512Mi"
-              cpu: "200m"
+              memory: "128Mi"
+              cpu: "300m"
 ---
 apiVersion: v1
 kind: Service
@@ -701,10 +701,10 @@ spec:
           resources:
             requests:
               memory: "128Mi"
-              cpu: "200m"
+              cpu: "300m"
             limits:
               memory: "128Mi"
-              cpu: "200m"
+              cpu: "300m"
 ---
 apiVersion: v1
 kind: Service
@@ -891,10 +891,10 @@ spec:
               resources:
                 requests:
                   memory: "64Mi"
-                  cpu: "100m"
+                  cpu: "200m"
                 limits:
                   memory: "64Mi"
-                  cpu: "100m"
+                  cpu: "200m"
           volumes:
             - name: connector-configs
               configMap:
@@ -959,11 +959,11 @@ spec:
             failureThreshold: 25
           resources:
             requests:
-              memory: "768Mi"
-              cpu: "200m"
+              memory: "512Mi"
+              cpu: "500m"
             limits:
-              memory: "768Mi"
-              cpu: "200m"
+              memory: "512Mi"
+              cpu: "500m"
 ---
 apiVersion: v1
 kind: Service
@@ -1043,11 +1043,11 @@ spec:
             failureThreshold: 25
           resources:
             requests:
-              memory: "768Mi"
-              cpu: "200m"
+              memory: "512Mi"
+              cpu: "500m"
             limits:
-              memory: "768Mi"
-              cpu: "200m"
+              memory: "512Mi"
+              cpu: "500m"
 ---
 apiVersion: v1
 kind: Service
@@ -1121,11 +1121,11 @@ spec:
             failureThreshold: 25
           resources:
             requests:
-              memory: "768Mi"
-              cpu: "200m"
+              memory: "512Mi"
+              cpu: "500m"
             limits:
-              memory: "768Mi"
-              cpu: "200m"
+              memory: "512Mi"
+              cpu: "500m"
 ---
 apiVersion: v1
 kind: Service
@@ -1201,10 +1201,10 @@ spec:
           resources:
             requests:
               memory: "128Mi"
-              cpu: "200m"
+              cpu: "300m"
             limits:
               memory: "128Mi"
-              cpu: "200m"
+              cpu: "300m"
 ---
 apiVersion: v1
 kind: Service
@@ -1363,11 +1363,11 @@ spec:
               mountPath: /etc/prometheus
           resources:
             requests:
-              memory: "256Mi"
-              cpu: "200m"
+              memory: "128Mi"
+              cpu: "300m"
             limits:
-              memory: "256Mi"
-              cpu: "200m"
+              memory: "128Mi"
+              cpu: "300m"
       volumes:
         - name: config
           configMap:
@@ -4951,11 +4951,11 @@ spec:
               readOnly: true
           resources:
             requests:
-              memory: "256Mi"
-              cpu: "200m"
+              memory: "128Mi"
+              cpu: "300m"
             limits:
-              memory: "256Mi"
-              cpu: "200m"
+              memory: "128Mi"
+              cpu: "300m"
       volumes:
         - name: grafana-datasources
           configMap:
