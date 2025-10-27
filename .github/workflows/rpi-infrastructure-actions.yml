@@ -9,6 +9,7 @@ on:
       - 'payment-service/**'
       - 'webapp/**'
       - '.github/workflows/rpi-infrastructure-actions.yml'
+      - 'k8s-micro-ecommerce.yaml'
 
   workflow_dispatch:
     inputs:
