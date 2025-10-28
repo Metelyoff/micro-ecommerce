@@ -1315,6 +1315,51 @@ spec:
           secret:
             secretName: cloudflared-creds
 ---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-exporter
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: node-exporter
+  template:
+    metadata:
+      labels:
+        app: node-exporter
+    spec:
+      containers:
+        - name: node-exporter
+          image: quay.io/prometheus/node-exporter:v1.7.0
+          args:
+            - "--path.rootfs=/host"
+          ports:
+            - containerPort: 9100
+              name: metrics
+          volumeMounts:
+            - name: proc
+              mountPath: /host/proc
+              readOnly: true
+            - name: sys
+              mountPath: /host/sys
+              readOnly: true
+            - name: root
+              mountPath: /host
+              readOnly: true
+      hostNetwork: true
+      hostPID: true
+      volumes:
+        - name: proc
+          hostPath:
+            path: /proc
+        - name: sys
+          hostPath:
+            path: /sys
+        - name: root
+          hostPath:
+            path: /
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -1333,6 +1378,9 @@ data:
               - 'order-service.ecommerce.svc.cluster.local:8086'
               - 'payment-service.ecommerce.svc.cluster.local:8085'
               - 'inventory-service.ecommerce.svc.cluster.local:80'
+      - job_name: 'node-exporter'
+        static_configs:
+          - targets: [ 'raspberrypi1:9100', 'raspberrypi2:9100', 'raspberrypi3:9100' ]
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -4779,6 +4827,16 @@ metadata:
   labels:
     grafana_alerting: "1"
 data:
+  contact-points.yaml: |
+    apiVersion: 1
+    contactPoints:
+      - orgId: 1
+        name: grafana-default-email
+        receivers:
+          - type: email
+            settings:
+              addresses: ${GRAFANA_CONTACT_POINT_EMAILS}
+              singleEmail: false
   alerting.yaml: |
     apiVersion: 1
     groups:
@@ -4840,9 +4898,9 @@ data:
             notification_settings:
               receiver: grafana-default-email
 
-          - uid: disk-space-low
-            title: "Low Disk Space on Node"
-            condition: C
+          - uid: disk-space-root-low
+            title: "Low Disk Space on /"
+            condition: B
             data:
               - refId: A
                 relativeTimeRange:
@@ -4852,55 +4910,49 @@ data:
                 model:
                   expr: |
                     100 * (
-                      node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay"} /
-                      node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay"}
+                      node_filesystem_avail_bytes{mountpoint="/", fstype="ext4", device="/dev/root"}
+                      /
+                      node_filesystem_size_bytes{mountpoint="/", fstype="ext4", device="/dev/root"}
                     )
-                  interval: ""
-                  legendFormat: __auto
+                  legendFormat: "{{instance}}"
                   refId: A
+              - refId: B
+                datasourceUid: __expr__
+                model:
+                  type: reduce
+                  expression: A
+                  reducer: last
+                  refId: B
               - refId: C
                 datasourceUid: __expr__
                 model:
                   type: threshold
-                  expression: A
+                  expression: B
                   refId: C
+                  labelFields:
+                    - instance
                   conditions:
                     - evaluator:
                         type: lt
-                        params: [10]
+                        params:
+                          - 70
                       operator:
                         type: and
                       query:
-                        params: [A]
+                        params:
+                          - B
                       reducer:
                         type: last
             noDataState: OK
             execErrState: Alerting
             for: 5m
+            notification_settings:
+              receiver: grafana-default-email
             annotations:
-              summary: "Disk almost full on node"
-              description: "Node {{ $labels.instance }} has less than 10% disk space on / partition."
+              summary: "Low disk space on / at {{ $labels.instance }}"
+              description: "Only {{ $values.B }}% space left on root"
             labels:
               severity: warning
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: grafana-contactpoints
-  namespace: monitoring
-  labels:
-    grafana_contactpoint: "1"
-data:
-  contact-points.yaml: |
-    apiVersion: 1
-    contactPoints:
-      - orgId: 1
-        name: grafana-default-email
-        receivers:
-          - type: email
-            settings:
-              addresses: ${GRAFANA_CONTACT_POINT_EMAILS}
-              singleEmail: false
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -4962,8 +5014,6 @@ spec:
               readOnly: true
             - name: grafana-alerting
               mountPath: /etc/grafana/provisioning/alerting
-            - name: contactpoints
-              mountPath: /etc/grafana/provisioning/alerting
           resources:
             requests:
               memory: "256Mi"
@@ -4984,6 +5034,3 @@ spec:
         - name: grafana-alerting
           configMap:
             name: grafana-alerting
-        - name: contactpoints
-          configMap:
-            name: grafana-contactpoints
