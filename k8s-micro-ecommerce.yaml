@@ -4920,7 +4920,7 @@ data:
 
           - uid: disk-space-root-low
             title: "Low Disk Space on /"
-            condition: B
+            condition: C
             data:
               - refId: A
                 relativeTimeRange:
@@ -4936,31 +4936,24 @@ data:
                     )
                   legendFormat: "{{instance}}"
                   refId: A
-              - refId: B
-                datasourceUid: __expr__
-                model:
-                  type: reduce
-                  expression: A
-                  reducer: last
-                  refId: B
               - refId: C
                 datasourceUid: __expr__
                 model:
                   type: threshold
-                  expression: B
+                  expression: A
                   refId: C
                   labelFields:
                     - instance
                   conditions:
                     - evaluator:
-                        type: lt
+                        type: gt
                         params:
-                          - 15
+                          - 90
                       operator:
                         type: and
                       query:
                         params:
-                          - B
+                          - C
                       reducer:
                         type: last
             noDataState: OK
@@ -5229,7 +5222,7 @@ data:
             {
               "refId": "A",
               "datasource": { "type": "loki", "uid": "DS_LOKI" },
-              "expr": "{job=~\".*\"}"
+              "expr": "{job=~\".+\"}"
             }
           ]
         }
