@@ -4840,6 +4840,46 @@ data:
             isPaused: false
             notification_settings:
               receiver: grafana-default-email
+          - uid: disk-space-low
+            title: "Low Disk Space on Node"
+            condition: C
+            data:
+              - refId: A
+                relativeTimeRange:
+                  from: 0
+                  to: 300
+                datasourceUid: DS_PROMETHEUS
+                model:
+                  expr: |
+                    100 * (
+                      node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay"} /
+                      node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay"}
+                    )
+                  interval: ""
+                  legendFormat: __auto
+                  refId: A
+              - refId: B
+                datasourceUid: __expr__
+                model:
+                  type: threshold
+                  expression: 10
+                  refId: B
+              - refId: C
+                datasourceUid: __expr__
+                model:
+                  type: lt
+                  expression: A
+                  reducer: last
+                  right: B
+                  refId: C
+            noDataState: OK
+            execErrState: Alerting
+            for: 5m
+            annotations:
+              summary: "Disk almost full on node"
+              description: "Node {{ $labels.instance }} has less than 10% disk space on / partition."
+            labels:
+              severity: warning
 ---
 apiVersion: v1
 kind: ConfigMap

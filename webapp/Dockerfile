@@ -1,6 +1,6 @@
 FROM nginx:alpine
 RUN apk --no-cache add gettext
-COPY build /usr/share/nginx/html
+COPY ./build /usr/share/nginx/html
 COPY nginx.template.conf nginx.template.conf
 COPY startup.sh /startup.sh
 RUN chmod +x /startup.sh
