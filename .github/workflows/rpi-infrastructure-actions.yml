@@ -121,6 +121,8 @@ jobs:
         run: |
           npm ci
           npm run build
+          ls -la
+          ls -la ${{ matrix.service }}/build
 
       - name: Docker login
         uses: docker/login-action@v3
