@@ -4804,7 +4804,6 @@ data:
                   maxDataPoints: 43200
                   range: false
                   refId: A
-    
               - refId: C
                 datasourceUid: __expr__
                 model:
@@ -4840,14 +4839,15 @@ data:
             isPaused: false
             notification_settings:
               receiver: grafana-default-email
+
           - uid: disk-space-low
             title: "Low Disk Space on Node"
             condition: C
             data:
               - refId: A
                 relativeTimeRange:
-                  from: 0
-                  to: 300
+                  from: 300
+                  to: 0
                 datasourceUid: DS_PROMETHEUS
                 model:
                   expr: |
@@ -4858,20 +4858,22 @@ data:
                   interval: ""
                   legendFormat: __auto
                   refId: A
-              - refId: B
-                datasourceUid: __expr__
-                model:
-                  type: threshold
-                  expression: 10
-                  refId: B
               - refId: C
                 datasourceUid: __expr__
                 model:
-                  type: lt
+                  type: threshold
                   expression: A
-                  reducer: last
-                  right: B
                   refId: C
+                  conditions:
+                    - evaluator:
+                        type: lt
+                        params: [10]
+                      operator:
+                        type: and
+                      query:
+                        params: [A]
+                      reducer:
+                        type: last
             noDataState: OK
             execErrState: Alerting
             for: 5m
