@@ -4832,11 +4832,14 @@ data:
     contactPoints:
       - orgId: 1
         name: grafana-default-email
+        uid: grafana-default-email
         receivers:
           - type: email
+            uid: grafana-default-email-receiver
             settings:
-              addresses: ${GRAFANA_CONTACT_POINT_EMAILS}
+              addresses: metelyoff@gmail.com
               singleEmail: false
+
   alerting.yaml: |
     apiVersion: 1
     groups:
@@ -4935,7 +4938,7 @@ data:
                     - evaluator:
                         type: lt
                         params:
-                          - 70
+                          - 15
                       operator:
                         type: and
                       query:
