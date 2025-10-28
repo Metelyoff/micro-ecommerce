@@ -131,3 +131,15 @@ management:
         all: 0, 0.5, 0.75, 0.95, 0.99, 1.0
       percentiles-histogram:
         all: true
+
+inventory:
+  cache:
+    items-all:
+      ttl-seconds: ${INV_CACHE_ITEMS_ALL_TTL_SECONDS:30}
+      max-size: ${INV_CACHE_ITEMS_ALL_MAX_SIZE:100}
+    item-by-id:
+      ttl-seconds: ${INV_CACHE_ITEM_BY_ID_TTL_SECONDS:60}
+      max-size: ${INV_CACHE_ITEM_BY_ID_MAX_SIZE:500}
+    reserved-items-by-order:
+      ttl-seconds: ${INV_CACHE_RESERVED_BY_ORDER_TTL_SECONDS:300}
+      max-size: ${INV_CACHE_RESERVED_BY_ORDER_MAX_SIZE:1000}

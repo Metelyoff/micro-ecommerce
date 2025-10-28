@@ -1,5 +1,6 @@
 package com.ecommerce.inventory.services.impl;
 
+import com.ecommerce.inventory.configs.CacheConfig;
 import com.ecommerce.inventory.dtos.ReservedItemDTO;
 import com.ecommerce.inventory.entities.ItemEntity;
 import com.ecommerce.inventory.entities.ReservedItemEntity;
@@ -13,6 +14,9 @@ import com.ecommerce.outbox.annotations.OutboxTransaction;
 import com.ecommerce.outbox.core.OutboxContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -47,6 +51,11 @@ public class ItemReservationServiceImpl implements ItemReservationService {
         this.maxReservedItems = maxReservedItems;
     }
 
+    @Caching(evict = {
+            @CacheEvict(cacheNames = CacheConfig.ITEMS_ALL, allEntries = true),
+            @CacheEvict(cacheNames = CacheConfig.ITEM_BY_ID, allEntries = true),
+            @CacheEvict(cacheNames = CacheConfig.RESERVED_ITEMS_BY_ORDER, key = "#orderId?.contextId", beforeInvocation = true)
+    })
     @OutboxTransaction(successEvent = "ItemReservationService.reserve")
     @Override
     public void reserve(OutboxContext orderId, Collection<ReservedItemDTO> reservedItems) {
@@ -135,6 +144,11 @@ public class ItemReservationServiceImpl implements ItemReservationService {
         }
     }
 
+    @Caching(evict = {
+            @CacheEvict(cacheNames = CacheConfig.ITEMS_ALL, allEntries = true),
+            @CacheEvict(cacheNames = CacheConfig.ITEM_BY_ID, allEntries = true),
+            @CacheEvict(cacheNames = CacheConfig.RESERVED_ITEMS_BY_ORDER, key = "#orderId?.contextId", beforeInvocation = true)
+    })
     @OutboxTransaction(successEvent = "ItemReservationService.cancelReservation")
     @Override
     public void cancelReservation(OutboxContext orderId) {
@@ -164,6 +178,7 @@ public class ItemReservationServiceImpl implements ItemReservationService {
     }
 
     @Override
+    @Cacheable(cacheNames = CacheConfig.RESERVED_ITEMS_BY_ORDER, key = "#orderId?.contextId")
     public Collection<ReservedItemDTO> findReservedItemsByOrderId(OutboxContext orderId) {
         log.debug("Find Reserved Items for Order Id: {}", orderId);
         return Optional.ofNullable(orderId)
