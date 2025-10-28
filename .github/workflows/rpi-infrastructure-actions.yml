@@ -113,6 +113,7 @@ jobs:
 
   build-and-push-fe:
     runs-on: self-hosted
+    needs: tests
     environment: rpc3s
     strategy:
       matrix:
