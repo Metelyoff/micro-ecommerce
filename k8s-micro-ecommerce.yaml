@@ -4849,7 +4849,7 @@ metadata:
   labels:
     grafana_contactpoint: "1"
 data:
-  contactPoints.yaml: |
+  contact-points.yaml: |
     apiVersion: 1
     contactPoints:
       - orgId: 1
@@ -4921,7 +4921,7 @@ spec:
             - name: grafana-alerting
               mountPath: /etc/grafana/provisioning/alerting
             - name: contactpoints
-              mountPath: /etc/grafana/provisioning/contact-points
+              mountPath: /etc/grafana/provisioning/alerting
           resources:
             requests:
               memory: "256Mi"
