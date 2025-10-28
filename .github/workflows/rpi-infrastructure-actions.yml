@@ -26,6 +26,7 @@ on:
 
 env:
   IMAGE_NAME: ${{ secrets.INFRASTRUCTURE_IMAGE_NAME }}
+  BUILDX_CACHE_DIR: /home/pi/.buildx-cache
 
 jobs:
   tests:
@@ -50,25 +51,23 @@ jobs:
           chmod +x gradlew
           ./gradlew test --no-daemon
 
-  build-and-push:
+  build-and-push-backend:
     runs-on: self-hosted
     environment: rpc3s
     needs: tests
     strategy:
       matrix:
-        service: [ inventory-service, order-service, payment-service, webapp ]
+        service: [ inventory-service, order-service, payment-service ]
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up JDK
-        if: matrix.service != 'webapp'
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
       - name: Cache Gradle
-        if: matrix.service != 'webapp'
         uses: actions/cache@v4
         with:
           path: |
@@ -79,7 +78,6 @@ jobs:
             ${{ runner.os }}-gradle-${{ matrix.service }}-
 
       - name: Build app
-        if: matrix.service != 'webapp'
         working-directory: ${{ matrix.service }}
         run: |
           chmod +x gradlew
@@ -98,6 +96,64 @@ jobs:
         with:
           install: true
 
+      - name: Configure Docker Buildx cache
+        run: mkdir -p ${{ env.BUILDX_CACHE_DIR }}
+
+      - name: Build & push backend image
+        uses: docker/build-push-action@v5
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          context: ./${{ matrix.service }}
+          file: ./${{ matrix.service }}/Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: ${{ env.IMAGE_NAME }}:${{ matrix.service }}
+          cache-from: type=local,src=${{ env.BUILDX_CACHE_DIR }}
+          cache-to: type=local,dest=${{ env.BUILDX_CACHE_DIR }},mode=max
+
+  build-and-push-fe:
+    runs-on: self-hosted
+    environment: rpc3s
+    strategy:
+      matrix:
+        service: [ webapp ]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Cache NPM
+        uses: actions/cache@v4
+        with:
+          path: ${{ matrix.service }}/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles(format('{0}/package-lock.json', matrix.service)) }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies & build frontend
+        working-directory: ${{ matrix.service }}
+        run: |
+          npm ci
+          npm run build
+
+      - name: Docker login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+
+      - name: Configure Docker Buildx cache
+        run: mkdir -p ${{ env.BUILDX_CACHE_DIR }}
+
       - name: Build & push image
         uses: docker/build-push-action@v5
         with:
@@ -107,14 +163,14 @@ jobs:
           platforms: linux/arm64
           push: true
           tags: ${{ env.IMAGE_NAME }}:${{ matrix.service }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=local,src=${{ env.BUILDX_CACHE_DIR }}
+          cache-to: type=local,dest=${{ env.BUILDX_CACHE_DIR }},mode=max
 
   deploy:
     if: ${{ github.event.inputs.triggerDeploy == 'true' }}
     runs-on: self-hosted
     environment: rpc3s
-    needs: build-and-push
+    needs: [build-and-push-backend, build-and-push-fe]
     env:
       ENV_PROFILE: ${{ secrets.ENV_PROFILE }}
       DOMAIN: ${{ secrets.DOMAIN }}
