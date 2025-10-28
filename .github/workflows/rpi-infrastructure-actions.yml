@@ -121,6 +121,7 @@ jobs:
         run: |
           npm ci
           npm run build
+          cp -r build /usr/share/nginx/html
 
       - name: Docker login
         uses: docker/login-action@v3
