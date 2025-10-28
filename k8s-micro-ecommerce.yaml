@@ -99,10 +99,10 @@ spec:
             failureThreshold: 25
           resources:
             requests:
-              memory: "512Mi"
+              memory: "384Mi"
               cpu: "500m"
             limits:
-              memory: "512Mi"
+              memory: "384Mi"
               cpu: "500m"
       volumes:
         - name: config
@@ -219,10 +219,10 @@ spec:
             failureThreshold: 25
           resources:
             requests:
-              memory: "512Mi"
+              memory: "384Mi"
               cpu: "500m"
             limits:
-              memory: "512Mi"
+              memory: "384Mi"
               cpu: "500m"
       volumes:
         - name: config
@@ -354,10 +354,10 @@ spec:
             failureThreshold: 25
           resources:
             requests:
-              memory: "512Mi"
+              memory: "384Mi"
               cpu: "500m"
             limits:
-              memory: "512Mi"
+              memory: "384Mi"
               cpu: "500m"
       volumes:
         - name: config
