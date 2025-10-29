@@ -68,6 +68,14 @@ jobs:
             --from-file=kube-dashboard.json=k8s/monitoring/grafana/dashboards/kube-dashboard.json \
             -n monitoring
 
+      - name: Create Grafana alerts and contact points
+        run: |
+          kubectl delete configmap grafana-alerting -n monitoring --ignore-not-found
+          kubectl create configmap grafana-alerting \
+            --from-file=alerting.yaml=k8s/monitoring/grafana/alerts/alerting.yaml \
+            --from-file=contact-points.yaml=k8s/monitoring/grafana/alerts/contact-points.yaml \
+            -n monitoring
+
       - name: Validate manifests
         run: kubectl apply --dry-run=client -f k8s/monitoring/k8s.yaml --kubeconfig ~/.kube/config
 
