@@ -112,6 +112,7 @@ groups:
           receiver: grafana-default-email
         annotations:
           summary: "Low disk space on / at {{ $labels.instance }}"
-          description: "Only {{ $values.A }}% space left on root"
+          description: |
+            🚨 Low disk space on {{ $labels.instance }}: {{ printf "%.1f" $value }}% used on /
         labels:
           severity: warning
