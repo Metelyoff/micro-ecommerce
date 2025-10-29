@@ -515,11 +515,11 @@ spec:
             - name: grafana-dashboard-provider
               mountPath: /etc/grafana/provisioning/dashboards
               readOnly: true
-            - name: grafana-dashboard-apps
-              mountPath: /var/lib/grafana/dashboards/apps
-              readOnly: true
             - name: grafana-alerting
               mountPath: /etc/grafana/provisioning/alerting
+              readOnly: true
+            - name: grafana-dashboard-apps
+              mountPath: /var/lib/grafana/dashboards/apps
               readOnly: true
             - name: grafana-dashboard-loki
               mountPath: /var/lib/grafana/dashboards/loki

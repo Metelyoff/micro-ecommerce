@@ -1,5 +1,5 @@
 {
-  "id": null,
+  "uid": "loki",
   "title": "Loki Logs Explore",
   "tags": [ "logs", "loki" ],
   "timezone": "browser",
