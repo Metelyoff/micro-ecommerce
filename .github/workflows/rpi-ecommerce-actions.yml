@@ -1,4 +1,4 @@
-name: Deploy infrastructure
+name: Deploy ecommerce infrastructure
 
 on:
   push:
@@ -8,8 +8,8 @@ on:
       - 'order-service/**'
       - 'payment-service/**'
       - 'webapp/**'
-      - '.github/workflows/rpi-infrastructure-actions.yml'
-      - 'k8s-micro-ecommerce.yaml'
+      - 'k8s/**'
+      - '.github/workflows/rpi-ecommerce-actions.yml'
 
   workflow_dispatch:
     inputs:
@@ -121,7 +121,6 @@ jobs:
         run: |
           npm ci
           npm run build
-          ls -la
 
       - name: Docker login
         uses: docker/login-action@v3
@@ -158,7 +157,6 @@ jobs:
     env:
       ENV_PROFILE: ${{ secrets.ENV_PROFILE }}
       DOMAIN: ${{ secrets.DOMAIN }}
-      GRAFANA_CONTACT_POINT_EMAILS: ${{ secrets.GRAFANA_CONTACT_POINT_EMAILS }}
       CLOUDFLARE_TUNNEL_TOKEN: ${{ secrets.CLOUDFLARE_TUNNEL_TOKEN }}
       ORDER_POSTGRES_USER: ${{ secrets.ORDER_POSTGRES_USER }}
       ORDER_POSTGRES_PASSWORD: ${{ secrets.ORDER_POSTGRES_PASSWORD }}
@@ -176,16 +174,15 @@ jobs:
           mkdir -p ~/.kube
           echo "${{ secrets.KUBE_CONFIG }}" | base64 --decode > ~/.kube/config
 
-      - name: Prepare ENV variables
+      - name: Prepare micro-ecommerce ENV variables
         run: |
-          cp k8s-micro-ecommerce.yaml template.yaml
+          cp k8s/ecommerce/k8s.yaml k8s-template.yaml
           envsubst \
-            '${ENV_PROFILE} ${DOMAIN} ${GRAFANA_CONTACT_POINT_EMAILS} ${IMAGE_NAME} ${ORDER_POSTGRES_USER} ${ORDER_POSTGRES_PASSWORD} ${PAYMENT_POSTGRES_USER} ${PAYMENT_POSTGRES_PASSWORD} ${INVENTORY_POSTGRES_USER} ${INVENTORY_POSTGRES_PASSWORD} ${INVENTORY_SERVICE_POSTGRES_USER} ${INVENTORY_SERVICE_POSTGRES_PASSWORD} ${CLOUDFLARE_TUNNEL_TOKEN}' \
-            < template.yaml > k8s-micro-ecommerce.yaml
+            '${ENV_PROFILE} ${DOMAIN} ${IMAGE_NAME} ${ORDER_POSTGRES_USER} ${ORDER_POSTGRES_PASSWORD} ${PAYMENT_POSTGRES_USER} ${PAYMENT_POSTGRES_PASSWORD} ${INVENTORY_POSTGRES_USER} ${INVENTORY_POSTGRES_PASSWORD} ${INVENTORY_SERVICE_POSTGRES_USER} ${INVENTORY_SERVICE_POSTGRES_PASSWORD} ${CLOUDFLARE_TUNNEL_TOKEN}' \
+            < k8s-template.yaml > k8s/ecommerce/k8s.yaml
 
       - name: Validate manifests
-        run: kubectl apply --dry-run=client -f k8s-micro-ecommerce.yaml --kubeconfig ~/.kube/config
+        run: kubectl apply --dry-run=client -f k8s/ecommerce/k8s.yaml --kubeconfig ~/.kube/config
 
       - name: Apply manifest
-        run: kubectl apply -f k8s-micro-ecommerce.yaml --kubeconfig ~/.kube/config
-
+        run: kubectl apply -f k8s/ecommerce/k8s.yaml --kubeconfig ~/.kube/config

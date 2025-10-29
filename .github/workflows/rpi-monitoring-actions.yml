@@ -1,0 +1,75 @@
+name: Deploy monitoring infrastructure
+
+on:
+  push:
+    branches: [main, k8s]
+    paths:
+      - 'k8s/monitoring/**'
+      - '.github/workflows/rpi-monitoring-actions.yml'
+
+  workflow_dispatch:
+    inputs:
+      triggerDeploy:
+        description: 'Deploy to cluster'
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+
+  deploy:
+    if: ${{ github.event.inputs.triggerDeploy == 'true' }}
+    runs-on: self-hosted
+    environment: rpc3s
+    env:
+      GRAFANA_CONTACT_POINT_EMAILS: ${{ secrets.GRAFANA_CONTACT_POINT_EMAILS }}
+      GF_SMTP_ENABLED: ${{ secrets.GF_SMTP_ENABLED }}
+      GF_SMTP_FROM_ADDRESS: ${{ secrets.GF_SMTP_FROM_ADDRESS }}
+      GF_SMTP_HOST: ${{ secrets.GF_SMTP_HOST }}
+      GF_SMTP_USER: ${{ secrets.GF_SMTP_USER }}
+      GF_SMTP_PASSWORD: ${{ secrets.GF_SMTP_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 --decode > ~/.kube/config
+
+      - name: Prepare monitoring ENV variables
+        run: |
+          cp k8s/monitoring/k8s.yaml k8s-template.yaml
+          cp k8s/monitoring/grafana/alerts/contact-points.yaml contact-points-template.yaml
+          envsubst \
+            '${GF_SMTP_ENABLED} ${GF_SMTP_FROM_ADDRESS} ${GF_SMTP_HOST} ${GF_SMTP_USER} ${GF_SMTP_PASSWORD}' \
+            < k8s-template.yaml > k8s/monitoring/k8s.yaml
+          envsubst \
+            '${GRAFANA_CONTACT_POINT_EMAILS}' \
+            < contact-points-template.yaml > k8s/monitoring/grafana/alerts/contact-points.yaml
+
+      - name: Create Grafana apps dashboard
+        run: |
+          kubectl delete configmap grafana-dashboard-apps -n monitoring --ignore-not-found
+          kubectl create configmap grafana-dashboard-apps \
+            --from-file=apps-dashboard.json=k8s/monitoring/grafana/dashboards/apps-dashboard.json \
+            -n monitoring
+
+      - name: Create Grafana loki dashboard
+        run: |
+          kubectl delete configmap grafana-dashboard-loki -n monitoring --ignore-not-found
+          kubectl create configmap grafana-dashboard-loki \
+            --from-file=loki-logs-dashboard.json=k8s/monitoring/grafana/dashboards/loki-logs-dashboard.json \
+            -n monitoring
+
+      - name: Create Grafana kubernetes dashboard
+        run: |
+          kubectl delete configmap grafana-dashboard-kube -n monitoring --ignore-not-found
+          kubectl create configmap grafana-dashboard-kube \
+            --from-file=kube-nodes.json=k8s/monitoring/grafana/dashboards/kube-nodes.json \
+            -n monitoring
+
+      - name: Validate manifests
+        run: kubectl apply --dry-run=client -f k8s/monitoring/k8s.yaml --kubeconfig ~/.kube/config
+
+      - name: Apply manifest
+        run: kubectl apply -f k8s/monitoring/k8s.yaml --kubeconfig ~/.kube/config

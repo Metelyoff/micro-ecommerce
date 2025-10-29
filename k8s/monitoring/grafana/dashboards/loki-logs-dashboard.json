@@ -1,0 +1,23 @@
+{
+  "id": null,
+  "title": "Loki Logs Explore",
+  "tags": [ "logs", "loki" ],
+  "timezone": "browser",
+  "schemaVersion": 16,
+  "version": 1,
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "logs",
+      "title": "Loki Log Stream",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 15 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "DS_LOKI" },
+          "expr": "{job=~\".+\"}"
+        }
+      ]
+    }
+  ]
+}

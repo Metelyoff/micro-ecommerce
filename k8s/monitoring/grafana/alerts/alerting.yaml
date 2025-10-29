@@ -1,0 +1,117 @@
+apiVersion: 1
+groups:
+  - name: ecommerce-alerts
+    folder: ecommerce-alerts
+    interval: 1m
+    rules:
+      - uid: instance_unavailable
+        title: Instance is unavailable
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: DS_PROMETHEUS
+            model:
+              editorMode: code
+              expr: up == 0
+              instant: true
+              intervalMs: 1000
+              legendFormat: __auto
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    type: eq
+                    params:
+                      - 0
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    type: last
+                    params: []
+                  type: query
+              expression: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: C
+              type: threshold
+        dashboardUid: spring_boot_21
+        panelId: 52
+        noDataState: OK
+        execErrState: Error
+        for: 1m
+        annotations:
+          __dashboardUid__: spring_boot_21
+          __panelId__: "52"
+          description: Instance {{ $labels.instance }} is unavailable.
+          summary: Instance {{ $labels.instance }} is unavailable.
+        isPaused: false
+        notification_settings:
+          receiver: grafana-default-email
+
+      - uid: disk-space-root-low
+        title: "Low Disk Space on /"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: DS_PROMETHEUS
+            model:
+              expr: |
+                100 * (
+                  node_filesystem_avail_bytes{mountpoint="/", fstype="ext4", device="/dev/root"}
+                  /
+                  node_filesystem_size_bytes{mountpoint="/", fstype="ext4", device="/dev/root"}
+                )
+              instant: true
+              intervalMs: 1000
+              legendFormat: '{{instance}}'
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 90
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: C
+              type: threshold
+        noDataState: NoData
+        execErrState: Error
+        for: 5m
+        notification_settings:
+          receiver: grafana-default-email
+        annotations:
+          summary: "Low disk space on / at {{ $labels.instance }}"
+          description: "Only {{ $values.A }}% space left on root"
+        labels:
+          severity: warning

@@ -1,0 +1,11 @@
+apiVersion: 1
+contactPoints:
+  - orgId: 1
+    name: grafana-default-email
+    uid: grafana-default-email
+    receivers:
+      - type: email
+        uid: grafana-default-email-receiver
+        settings:
+          addresses: ${GRAFANA_CONTACT_POINT_EMAILS}
+          singleEmail: false
