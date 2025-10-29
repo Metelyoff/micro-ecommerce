@@ -1,5 +1,6 @@
 ## Deployment status
-[![Deploy inventory service](https://github.com/Metelyoff/micro-ecommerce/actions/workflows/rpi-inventory-actions.yml/badge.svg?branch=k8s)](https://github.com/Metelyoff/micro-ecommerce/actions/workflows/rpi-inventory-actions.yml)
+[![Deploy ecommerce infrastructure](https://github.com/Metelyoff/micro-ecommerce/actions/workflows/rpi-ecommerce-actions.yml/badge.svg?branch=k8s)](https://github.com/Metelyoff/micro-ecommerce/actions/workflows/rpi-ecommerce-actions.yml)
+[![Deploy monitoring infrastructure](https://github.com/Metelyoff/micro-ecommerce/actions/workflows/rpi-monitoring-actions.yml/badge.svg?branch=k8s)](https://github.com/Metelyoff/micro-ecommerce/actions/workflows/rpi-monitoring-actions.yml)
 
 **See the DEMO on the host:** [rpik3s.xyz](https://rpik3s.xyz)
 
