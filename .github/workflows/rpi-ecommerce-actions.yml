@@ -8,7 +8,7 @@ on:
       - 'order-service/**'
       - 'payment-service/**'
       - 'webapp/**'
-      - 'k8s/**'
+      - 'k8s/ecommerce/**'
       - '.github/workflows/rpi-ecommerce-actions.yml'
 
   workflow_dispatch:
