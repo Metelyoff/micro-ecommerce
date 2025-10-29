@@ -4924,7 +4924,7 @@ data:
             data:
               - refId: A
                 relativeTimeRange:
-                  from: 300
+                  from: 600
                   to: 0
                 datasourceUid: DS_PROMETHEUS
                 model:
@@ -4934,36 +4934,45 @@ data:
                       /
                       node_filesystem_size_bytes{mountpoint="/", fstype="ext4", device="/dev/root"}
                     )
-                  legendFormat: "{{instance}}"
+                  instant: true
+                  intervalMs: 1000
+                  legendFormat: '{{instance}}'
+                  maxDataPoints: 43200
+                  range: false
                   refId: A
               - refId: C
                 datasourceUid: __expr__
                 model:
-                  type: threshold
-                  expression: A
-                  refId: C
-                  labelFields:
-                    - instance
                   conditions:
                     - evaluator:
-                        type: gt
                         params:
                           - 90
+                        type: gt
                       operator:
                         type: and
                       query:
                         params:
                           - C
                       reducer:
+                        params: []
                         type: last
-            noDataState: OK
-            execErrState: Alerting
+                      type: query
+                  datasource:
+                    type: __expr__
+                    uid: __expr__
+                  expression: A
+                  intervalMs: 1000
+                  maxDataPoints: 43200
+                  refId: C
+                  type: threshold
+            noDataState: NoData
+            execErrState: Error
             for: 5m
             notification_settings:
               receiver: grafana-default-email
             annotations:
               summary: "Low disk space on / at {{ $labels.instance }}"
-              description: "Only {{ $values.B }}% space left on root"
+              description: "Only {{ $values.A }}% space left on root"
             labels:
               severity: warning
 ---
