@@ -65,7 +65,7 @@ jobs:
         run: |
           kubectl delete configmap grafana-dashboard-kube -n monitoring --ignore-not-found
           kubectl create configmap grafana-dashboard-kube \
-            --from-file=kube-nodes.json=k8s/monitoring/grafana/dashboards/kube-nodes.json \
+            --from-file=kube-dashboard.json=k8s/monitoring/grafana/dashboards/kube-dashboard.json \
             -n monitoring
 
       - name: Validate manifests
