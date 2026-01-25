@@ -1,5 +1,4 @@
 testcontainers.reuse.enable=true
 docker.client.strategy=org.testcontainers.dockerclient.UnixSocketClientProviderStrategy
 docker.host=unix:///var/run/docker.sock
-docker.client.strategy=org.testcontainers.dockerclient.UnixSocketClientProviderStrategy
-docker.api.version=1.52
+api.version=1.44
