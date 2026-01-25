@@ -27,6 +27,7 @@ repositories {
 }
 
 extra["springCloudVersion"] = "2025.0.0"
+extra["testcontainersVersion"] = "2.0.3"
 
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-web")
@@ -54,20 +55,21 @@ dependencies {
     runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
-	testImplementation("org.testcontainers:junit-jupiter:1.21.3")
-	testImplementation("org.testcontainers:postgresql:1.21.3")
-	testImplementation("org.testcontainers:kafka:1.21.3")
+	testImplementation("org.testcontainers:junit-jupiter")
+	testImplementation("org.testcontainers:postgresql")
+	testImplementation("org.testcontainers:kafka")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	// Overridden test dependencies due to vulnerability issues
 	testImplementation("org.apache.commons:commons-compress:1.27.1")
 	testImplementation("net.minidev:json-smart:2.5.2")
 	testImplementation("org.apache.commons:commons-lang3:3.18.0")
-	testImplementation("org.apache.tomcat.embed:tomcat-embed-core:11.0.9")
+	testImplementation("org.apache.tomcat.embed:tomcat-embed-core:11.0.12")
 }
 
 dependencyManagement {
 	imports {
 		mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("springCloudVersion")}")
+		mavenBom("org.testcontainers:testcontainers-bom:${property("testcontainersVersion")}")
 	}
 }
 
