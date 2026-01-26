@@ -165,7 +165,7 @@ metadata:
   namespace: monitoring
 type: Opaque
 stringData:
-  smtp-password: ${GF_SMTP_PASSWORD}
+  smtp-password: "${GF_SMTP_PASSWORD}"
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -474,8 +474,8 @@ spec:
       labels:
         app: grafana
     spec:
-      nodeSelector:
-        node-role.kubernetes.io/worker: "true"
+#      nodeSelector:
+#        node-role.kubernetes.io/worker: "true"
       initContainers:
         - name: wait-for-prometheus
           image: busybox
