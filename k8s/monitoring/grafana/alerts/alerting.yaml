@@ -69,11 +69,7 @@ groups:
             datasourceUid: DS_PROMETHEUS
             model:
               expr: |
-                100 * (
-                  node_filesystem_avail_bytes{mountpoint="/", fstype="ext4", device="/dev/root"}
-                  /
-                  node_filesystem_size_bytes{mountpoint="/", fstype="ext4", device="/dev/root"}
-                )
+                100 * node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}
               instant: true
               intervalMs: 1000
               legendFormat: '{{instance}}'
@@ -86,13 +82,13 @@ groups:
               conditions:
                 - evaluator:
                     params:
-                      - 90
-                    type: gt
+                      - 10
+                    type: lt
                   operator:
                     type: and
                   query:
                     params:
-                      - C
+                      - A
                   reducer:
                     params: []
                     type: last
