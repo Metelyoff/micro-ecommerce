@@ -854,10 +854,14 @@ metadata:
   namespace: ecommerce
 spec:
   schedule: "*/5 * * * *"
-  successfulJobsHistoryLimit: 1
-  failedJobsHistoryLimit: 1
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 120
+  successfulJobsHistoryLimit: 0
+  failedJobsHistoryLimit: 0
   jobTemplate:
     spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 300
       template:
         spec:
           nodeSelector:
