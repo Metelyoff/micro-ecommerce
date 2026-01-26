@@ -36,6 +36,10 @@ jobs:
           mkdir -p ~/.kube
           echo "${{ secrets.KUBE_CONFIG }}" | base64 --decode > ~/.kube/config
 
+      - name: Ensure monitoring namespace
+        run: |
+          kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
+
       - name: Prepare monitoring ENV variables
         run: |
           cp k8s/monitoring/k8s.yaml k8s-template.yaml
